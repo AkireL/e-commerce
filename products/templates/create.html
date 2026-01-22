@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Django app</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+    <div class="min-h-screen flex flex-col items-center bg-gray-50 p-20">
+        <h1 class="text-xl">Vista de creación de productos</h1>
+        <form action='{% url "add_product" %}' method="post"
+        class="w-full max-w-md">
+            {% csrf_token %}
+            {{ form.as_p}}
+            <button type="submit" class="mt-10 w-full bg-blue-500 text-white px-4 py-2 rounded">Crear Producto</button>
+        </form>
+    </div>
+</body>
+
+</html>
