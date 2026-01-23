@@ -109,3 +109,7 @@ Book.objects.first().author.all()
 docker compose exec web bash 
 
 python manage.py runserver
+
+# Crear usuarios
+
+python manage.py createsuperuser
