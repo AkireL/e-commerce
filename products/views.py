@@ -24,7 +24,6 @@ class CreateProductView(FormView):
     
 class UpdateProductView(UpdateView):
     model = Product
-    fields = ["name", "photo"]
+    fields = ["name", "description", "price", "stock", "available", "photo", ]
     success_url = reverse_lazy('product_list')
     template_name = 'create.html'
-

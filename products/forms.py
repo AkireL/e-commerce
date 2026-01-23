@@ -8,19 +8,28 @@ class ProductForm(forms.Form):
     stock = forms.IntegerField(max_value=999999, label="Stock", required=True)
     available = forms.BooleanField(initial=True, label='Disponible', required=False)
     photo = forms.ImageField(label='Foto', required=False)
-    
+    id = forms.IntegerField(widget=forms.HiddenInput(), required=False)
+
     def save(self):
         if self.cleaned_data.get('id'):
-            print("Updating existing product is not implemented yet.")
+            product = Product.objects.get(id=self.cleaned_data['id'])
+
+            product.name = self.cleaned_data['name']
+            product.description = self.cleaned_data['description']
+            product.price = self.cleaned_data['price']
+            product.stock = self.cleaned_data['stock']
+            product.available = self.cleaned_data['available']
+            if self.cleaned_data['photo']:
+                product.photo = self.cleaned_data['photo']
+            product.save()
+            
             return
-        print("Creating new product with data:")
-        return
-            # photo = self.cleaned_data['photo']
-        # Product.objects.create(
-        #     name=self.cleaned_data['name'],
-        #     description=self.cleaned_data['description'],
-        #     price=self.cleaned_data['price'],
-        #     stock=self.cleaned_data['stock'],
-        #     available=self.cleaned_data['available'],
-        #     photo=self.cleaned_data['photo'],
-        # )
+        
+        Product.objects.create(
+            name=self.cleaned_data['name'],
+            description=self.cleaned_data['description'],
+            price=self.cleaned_data['price'],
+            stock=self.cleaned_data['stock'],
+            available=self.cleaned_data['available'],
+            photo=self.cleaned_data['photo'],
+        )
