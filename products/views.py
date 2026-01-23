@@ -2,6 +2,7 @@ from django.shortcuts import render
 from .models import Product
 from .forms import ProductForm
 from django.views.generic import TemplateView, FormView
+from django.views.generic.edit import UpdateView
 from django.urls import reverse_lazy
 
 class ListProductsView(TemplateView):
@@ -20,3 +21,10 @@ class CreateProductView(FormView):
     def form_valid(self, form):
         form.save()
         return super().form_valid(form)
+    
+class UpdateProductView(UpdateView):
+    model = Product
+    fields = ["name", "photo"]
+    success_url = reverse_lazy('product_list')
+    template_name = 'create.html'
+
