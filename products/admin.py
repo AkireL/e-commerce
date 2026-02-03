@@ -3,7 +3,7 @@ from .models import Product
 
 class ProductAdmin(admin.ModelAdmin):
     model = Product
-    list_display = ('name', 'price', 'stock', 'created_at')
+    list_display = ('name', 'price', 'stock', 'created_at', 'updated_at', 'available')
     search_fields = ('name', 'description')
     list_filter = ('created_at',)
 
