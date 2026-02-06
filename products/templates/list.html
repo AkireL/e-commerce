@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="max-w-7xl mx-auto">
-    <div class="flex justify-between items-center mb-12">
+<div class="max-w-5xl mx-auto">
+    <div class="flex justify-between items-center mb-12 xs:mx-10">
         <h1 class="text-4xl font-bold text-gray-800">Productos</h1>
         <a href="{%url 'add_product'%}"
-            class="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-3 rounded-lg shadow-lg transition-colors duration-200 flex items-center gap-2">
+            class="hover:text-gray-800 mt-2 text-gray-500 flex items-center gap-1">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
             </svg>
-            Agregar Producto
+            Producto
         </a>
     </div>
 
