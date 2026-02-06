@@ -49,6 +49,12 @@
                     {% endif %}
                 </div>
             </div>
+            <form action="{% url 'add_product_order'%}" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="product" value="{{ product.id }}">
+                <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 transition-colors duration-200">
+                    Agregar al carrito
+                </form>
         </div>
         {% endfor %}
     </div>

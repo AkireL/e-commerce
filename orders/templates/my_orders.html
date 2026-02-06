@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="max-w-5xl mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-900">Mis Órdenes</h1>
+        <p class="text-gray-500 mt-1">Aquí puedes ver tus órdenes recientes</p>
+    </div>
+
+    {% if order %}
+    <div class="bg-white rounded-xl shadow-xs border-gray-100 overflow-hidden pb-6">
+        <!-- Order Info -->
+        <div class="p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <h2 class="text-xl font-semibold text-gray-800">
+                    Orden #{{ order.id }}
+                </h2>
+                <p class="text-sm text-gray-500">
+                    {{ order.order_at|date:"d M Y · H:i" }}
+                </p>
+            </div>
+
+            {% if order.is_active %}
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700">
+                    Activa
+                </span>
+            {% else %}
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-600">
+                    Inactiva
+                </span>
+            {% endif %}
+        </div>
+
+        <!-- Table -->
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+                <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
+                    <tr>
+                        <th class="px-6 py-3 text-left">Producto</th>
+                        <th class="px-6 py-3 text-left">Cantidad</th>
+                        <th class="px-6 py-3 text-right">Precio</th>
+                        <th class="px-6 py-3 text-right">Total</th>
+                    </tr>
+                </thead>
+
+                <tbody class="divide-y divide-gray-100">
+                    {% for item in order.orderproduct_set.all %}
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-6 py-">
+                            <div class="flex items-center gap-4">
+                                {% if item.product.photo %}
+                                    <img
+                                        src="{{ item.product.photo.url }}"
+                                        alt="{{ item.product.name }}"
+                                        class="w-12 h-12 rounded-lg object-cover"
+                                    >
+                                {% else %}
+                                    <div class="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center text-xs text-gray-400">
+                                        Sin imagen
+                                    </div>
+                                {% endif %}
+
+                                <span class="font-medium text-gray-800">
+                                    {{ item.product.name }}
+                                </span>
+                            </div>
+                        </td>
+
+                        <td class="px-6 py-4 text-gray-700">
+                            {{ item.quantity }}
+                        </td>
+
+                        <td class="px-6 py-4 text-right font-semibold text-gray-800">
+                            ${{ item.product.price }}
+                        </td>
+
+                        <td class="px-6 py-4 text-right font-semibold text-gray-800">
+                            ${% widthratio item.product.price 1 item.quantity %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- Empty state -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-10 text-center">
+        <p class="text-gray-500">No tienes órdenes activas.</p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
