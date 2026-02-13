@@ -18,13 +18,12 @@ class CreateProductView(LoginRequiredMixin, FormView):
     form_class = ProductForm
     success_url = reverse_lazy('product_list')
 
-
     def form_valid(self, form):
         form.save()
         return super().form_valid(form)
     
 class UpdateProductView(LoginRequiredMixin, UpdateView):
     model = Product
-    fields = ["name", "description", "price", "stock", "available", "photo", ]
+    form_class = ProductForm
     success_url = reverse_lazy('product_list')
     template_name = 'create.html'

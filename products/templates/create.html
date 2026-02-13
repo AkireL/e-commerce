@@ -1,30 +1,195 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="min-h-screen flex flex-col items-center bg-gray-50 p-20">
-    <h1 class="text-xl">Vista de creación de productos</h1>
-    <form action='{% url "add_product" %}' method="post" enctype="multipart/form-data" class="w-full max-w-md">
-        {% csrf_token %}
-        {% if form.instance.id %}
-        <input type="hidden" name="id" value="{{ form.instance.id }}">
-        {% endif %}
-        {{ form.as_p }}
-        <button type="submit" class="mt-10 w-full bg-blue-500 text-white px-4 py-2 rounded">
-            {% if form.instance.id %}
-            {{"Actualizar Producto"}}
-            {% else %}
-            {{"Crear Producto"}}
-            {%endif%}
-        </button>
-    </form>
+<section class="relative isolate overflow-hidden py-16 sm:py-20">
+    <div class="relative mx-auto max-w-6xl px-6 lg:px-8">
+        <div class="grid gap-12">
+            <div class="lg:pl-6">
+                <div
+                    class="rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-2xl shadow-slate-300/50 backdrop-blur-sm sm:p-10">
+                    <div class="mb-8 flex flex-wrap items-end justify-between gap-4">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                                {% if form.instance and form.instance.pk %}
+                                Actualizando elemento
+                                {% else %}
+                                Nuevo registro
+                                {% endif %}
+                            </p>
+                            <h2 class="mt-2 text-2xl font-semibold text-slate-900">
+                                {% if form.instance and form.instance.pk %}
+                                Edita los detalles del producto
+                                {% else %}
+                                Completa la ficha del producto
+                                {% endif %}
+                            </h2>
+                        </div>
+                    </div>
 
-    {% if form.instance.id %}
-    <form method="post" action="{% url 'delete_product' product.id %}"
-        onsubmit="return confirm('¿Seguro que deseas eliminar este producto?')" class="inline">
-        {% csrf_token %}
-        <button type="submit" class="text-red-600 hover:underline bg-transparent border-none cursor-pointer">
-            Eliminar
-        </button>
-    </form>
-    {% endif %}
+                    <form
+                        action="{% if form.instance and form.instance.pk %}{% url 'edit_product' form.instance.pk %}{% else %}{% url 'add_product' %}{% endif %}"
+                        method="post" enctype="multipart/form-data" class="space-y-8">
+                        {% csrf_token %}
+
+                        {% if form.non_field_errors %}
+                        <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600">
+                            {% for error in form.non_field_errors %}
+                            <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <div class="grid gap-6">
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between gap-3">
+                                    <label for="{{ form.name.id_for_label }}"
+                                        class="text-sm font-semibold text-slate-700">{{ form.name.label }} {% if form.name.field.required %} <span>*</span> {% endif %}</label>
+                                </div>
+                                {{ form.name }}
+                                {% if form.name.help_text %}
+                                <p class="text-xs text-slate-500">{{ form.name.help_text }}</p>
+                                {% endif %}
+                                {% if form.name.errors %}
+                                <div class="space-y-1 text-xs font-medium text-rose-500">
+                                    {% for error in form.name.errors %}
+                                    <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between gap-3">
+                                    <label for="{{ form.description.id_for_label }}"
+                                        class="text-sm font-semibold text-slate-700">{{ form.description.label}} {% if form.description.field.required %}*{% endif %}</label>
+                                </div>
+                                {{ form.description }}
+                                {% if form.description.help_text %}
+                                <p class="text-xs text-slate-500">{{ form.description.help_text }}</p>
+                                {% endif %}
+                                {% if form.description.errors %}
+                                <div class="space-y-1 text-xs font-medium text-rose-500">
+                                    {% for error in form.description.errors %}
+                                    <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="grid gap-6 sm:grid-cols-2">
+                                <div class="space-y-2">
+                                    <div class="flex items-center justify-between gap-3">
+                                        <label for="{{ form.price.id_for_label }}"
+                                            class="text-sm font-semibold text-slate-700">{{ form.price.label }} {%if form.price.field.required %} *34{% endif %}</label>
+                                    </div>
+                                    {{ form.price }}
+                                    {% if form.price.help_text %}
+                                    <p class="text-xs text-slate-500">{{ form.price.help_text }}</p>
+                                    {% endif %}
+                                    {% if form.price.errors %}
+                                    <div class="space-y-1 text-xs font-medium text-rose-500">
+                                        {% for error in form.price.errors %}
+                                        <p>{{ error }}</p>
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="space-y-2">
+                                    <div class="flex items-center justify-between gap-3">
+                                        <label for="{{ form.stock.id_for_label }}"
+                                            class="text-sm font-semibold text-slate-700">{{ form.stock.label }} {% if form.stock.field.required %}*{% endif %}</label>
+                                    </div>
+                                    {{ form.stock }}
+                                    {% if form.stock.help_text %}
+                                    <p class="text-xs text-slate-500">{{ form.stock.help_text }}</p>
+                                    {% endif %}
+                                    {% if form.stock.errors %}
+                                    <div class="space-y-1 text-xs font-medium text-rose-500">
+                                        {% for error in form.stock.errors %}
+                                        <p>{{ error }}</p>
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="space-y-2">
+                                <label
+                                    class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300">
+                                    {{ form.available }}
+                                    <span>{{ form.available.label }}</span>
+                                </label>
+                                {% if form.available.help_text %}
+                                <p class="text-xs text-slate-500 pl-9">{{ form.available.help_text }}</p>
+                                {% endif %}
+                                {% if form.available.errors %}
+                                <div class="space-y-1 text-xs font-medium text-rose-500">
+                                    {% for error in form.available.errors %}
+                                    <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between gap-3">
+                                    <label for="{{ form.photo.id_for_label }}"
+                                        class="text-sm font-semibold text-slate-700">{{ form.photo.label }} {% if form.photo.field.required %}*{% endif %}</label>
+                                </div>
+                                {{ form.photo }}
+                                {% if form.photo.help_text %}
+                                <p class="text-xs text-slate-500">{{ form.photo.help_text }}</p>
+                                {% endif %}
+                                {% if form.photo.errors %}
+                                <div class="space-y-1 text-xs font-medium text-rose-500">
+                                    {% for error in form.photo.errors %}
+                                    <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <button type="submit"
+                                class="inline-flex w-full items-center justify-center rounded-2xl bg-sky-600 px-5 py-3 text-base font-semibold text-white shadow-lg shadow-sky-200 transition hover:bg-sky-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 sm:w-auto">
+                                {% if form.instance and form.instance.pk %}
+                                Guardar cambios
+                                {% else %}
+                                Crear producto
+                                {% endif %}
+                            </button>
+                            <a href="{% url 'product_list' %}"
+                                class="inline-flex w-full items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-base font-semibold text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-800 sm:w-auto">
+                                Volver al listado
+                            </a>
+                        </div>
+                    </form>
+
+                    {% if form.instance and form.instance.pk %}
+                    <div class="mt-8 rounded-2xl border border-slate-200 bg-slate-50 px-6 py-5">
+                        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <p class="text-sm font-semibold text-slate-800">¿Quieres eliminar este producto?</p>
+                                <p class="text-sm text-slate-500">Puedes retirarlo del catálogo en cualquier momento.
+                                    Esta acción no se puede deshacer.</p>
+                            </div>
+                            <form method="post" action="{% url 'delete_product' form.instance.pk %}"
+                                onsubmit="return confirm('¿Seguro que deseas eliminar este producto?')"
+                                class="sm:flex sm:items-center">
+                                {% csrf_token %}
+                                <button type="submit"
+                                    class="inline-flex items-center justify-center rounded-full border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-600 transition hover:border-red-300 hover:bg-red-50 hover:text-red-700">
+                                    Eliminar producto
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 {% endblock content %}
