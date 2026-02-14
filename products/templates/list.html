@@ -49,14 +49,56 @@
                     {% endif %}
                 </div>
             </div>
-            <form action="{% url 'add_product_order'%}" method="post">
+            <form action="{% url 'add_product_order' %}" method="post" class="border-t border-gray-100 bg-gray-50/70" data-quantity-form>
                 {% csrf_token %}
                 <input type="hidden" name="product" value="{{ product.id }}">
-                <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 transition-colors duration-200">
-                    Agregar al carrito
-                </form>
+                <input type="hidden" name="quantity" value="1" data-quantity-input>
+
+                <div class="flex flex-col gap-4 p-4">
+                    <div class="flex items-center justify-between gap-4 rounded-full bg-blue-600 px-5 py-2 text-white shadow-sm">
+                        <button type="button" class="flex h-10 w-10 items-center justify-center rounded-full text-2xl font-light transition hover:bg-blue-700/40" data-quantity-action="decrement" aria-label="Disminuir cantidad">
+                            &minus;
+                        </button>
+                        <span class="min-w-[2.5rem] text-center text-lg font-semibold tracking-wide" data-quantity-display>1</span>
+                        <button type="button" class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-800 text-2xl font-medium transition hover:bg-blue-900" data-quantity-action="increment" aria-label="Aumentar cantidad">
+                            +
+                        </button>
+                    </div>
+
+                    <button type="submit" class="w-full rounded-full bg-blue-500 py-2 text-sm font-semibold uppercase tracking-wide text-white shadow-sm transition hover:bg-blue-600">
+                        Agregar al carrito
+                    </button>
+                </div>
+            </form>
         </div>
         {% endfor %}
     </div>
 </div>
 {% endblock content %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll('[data-quantity-form]').forEach(form => {
+        const input = form.querySelector('[data-quantity-input]');
+        const display = form.querySelector('[data-quantity-display]');
+
+        form.querySelectorAll('[data-quantity-action]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const action = btn.getAttribute('data-quantity-action');
+                let current = parseInt(input.value, 10) || 1;
+
+                if (action === 'increment') {
+                    current += 1;
+                } else if (action === 'decrement' && current > 1) {
+                    current -= 1;
+                }
+
+                input.value = current;
+                display.textContent = current;
+            });
+        });
+    });
+});
+</script>
+{% endblock extra_scripts %}

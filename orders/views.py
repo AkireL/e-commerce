@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.http import HttpResponseRedirect
 from .models import Order
 from django.views.generic import DetailView, CreateView
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -23,8 +24,18 @@ class CreateOrderProductView(LoginRequiredMixin, CreateView):
             is_active=True,
             user=self.request.user
         )
-        form.instance.order = order
-        form.instance.quantity = 1
-        form.save()
 
-        return super().form_valid(form)
+        quantity = form.cleaned_data["quantity"]
+        product = form.cleaned_data["product"]
+        
+        order_product, created = order.orderproduct_set.get_or_create(
+            product=product,
+            defaults={"quantity": quantity}
+        )
+
+        if not created:
+            order.orderproduct_set.filter(pk=order_product.pk).update(quantity=quantity)
+            order_product.refresh_from_db(fields=["quantity"])
+
+        self.object = order_product
+        return HttpResponseRedirect(self.get_success_url())
