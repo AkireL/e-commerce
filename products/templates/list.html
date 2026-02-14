@@ -12,7 +12,7 @@
         </a>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {% for product in products %}
         <div class="bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden">
             <!-- Imagen -->
@@ -54,18 +54,18 @@
                 <input type="hidden" name="product" value="{{ product.id }}">
                 <input type="hidden" name="quantity" value="1" data-quantity-input>
 
-                <div class="flex flex-col gap-4 p-4">
-                    <div class="flex items-center justify-between gap-4 rounded-full bg-blue-600 px-5 py-2 text-white shadow-sm">
-                        <button type="button" class="flex h-10 w-10 items-center justify-center rounded-full text-2xl font-light transition hover:bg-blue-700/40" data-quantity-action="decrement" aria-label="Disminuir cantidad">
-                            &minus;
+                <div class="flex flex-col gap-4 p-5">
+                    <div class="flex items-center justify-between gap-3 rounded-full border border-white/10 bg-blue-500 px-2 py-1 text-white">
+                        <button type="button" class="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-2xl font-light transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/60" data-quantity-action="decrement" aria-label="Disminuir cantidad">
+                            <span aria-hidden="true">&minus;</span>
                         </button>
-                        <span class="min-w-[2.5rem] text-center text-lg font-semibold tracking-wide" data-quantity-display>1</span>
-                        <button type="button" class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-800 text-2xl font-medium transition hover:bg-blue-900" data-quantity-action="increment" aria-label="Aumentar cantidad">
-                            +
+                        <span class="flex-1 text-center text-sm font-semibold tracking-wide drop-shadow-sm" data-quantity-display>1</span>
+                        <button type="button" class="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-2xl font-semibold transition hover:bg-white/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/60" data-quantity-action="increment" aria-label="Aumentar cantidad">
+                            <span aria-hidden="true">+</span>
                         </button>
                     </div>
 
-                    <button type="submit" class="w-full rounded-full bg-blue-500 py-2 text-sm font-semibold uppercase tracking-wide text-white shadow-sm transition hover:bg-blue-600">
+                    <button type="submit" class="inline-flex w-full items-center justify-center rounded-full bg-blue-600 py-3 text-sm text-white">
                         Agregar al carrito
                     </button>
                 </div>
