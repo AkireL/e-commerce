@@ -9,18 +9,11 @@
                     class="rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-2xl shadow-slate-300/50 backdrop-blur-sm sm:p-10">
                     <div class="mb-8 flex flex-wrap items-end justify-between gap-4">
                         <div>
-                            <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-                                {% if form.instance and form.instance.pk %}
-                                Actualizando elemento
-                                {% else %}
-                                Nuevo registro
-                                {% endif %}
-                            </p>
                             <h2 class="mt-2 text-2xl font-semibold text-slate-900">
                                 {% if form.instance and form.instance.pk %}
                                 Edita los detalles del producto
                                 {% else %}
-                                Completa la ficha del producto
+                                Crea un nuevo producto
                                 {% endif %}
                             </h2>
                         </div>

@@ -18,10 +18,10 @@ from django.contrib import admin
 from django.urls import include, path
 from django.conf import settings
 from django.conf.urls.static import static
-from users.views import HomeView
+from users.views import ProfileView
 
 urlpatterns = [
-    path('home/', HomeView.as_view(), name='home'),
+    path('profile/', ProfileView.as_view(), name='profile'),
     path('admin/', admin.site.urls),
     path('card/', include('app_1.urls')),
     path('product/', include('products.urls')),
