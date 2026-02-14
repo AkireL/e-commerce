@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-<section class="relative isolate overflow-hidden py-16 sm:py-20">
+<section class="relative isolate overflow-hidden">
     <div class="relative mx-auto max-w-6xl px-6 lg:px-8">
         <div class="grid gap-12">
             <div class="lg:pl-6">
@@ -80,7 +80,7 @@
                                 <div class="space-y-2">
                                     <div class="flex items-center justify-between gap-3">
                                         <label for="{{ form.price.id_for_label }}"
-                                            class="text-sm font-semibold text-slate-700">{{ form.price.label }} {%if form.price.field.required %} *34{% endif %}</label>
+                                            class="text-sm font-semibold text-slate-700">{{ form.price.label }} {%if form.price.field.required %} *{% endif %}</label>
                                     </div>
                                     {{ form.price }}
                                     {% if form.price.help_text %}
