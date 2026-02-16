@@ -45,7 +45,7 @@
                 </thead>
 
                 <tbody class="divide-y divide-gray-100">
-                    {% for item in order.orderproduct_set.all %}
+                    {% for item in order_items %}
                     <tr class="hover:bg-gray-50 transition">
                         <td class="px-6 py-">
                             <div class="flex items-center gap-4">
@@ -80,9 +80,33 @@
                         </td>
                     </tr>
                     {% endfor %}
+                    {% if order_items %}
+                    <tr class="bg-gray-50">
+                        <td colspan="3" class="px-6 py-4 text-right text-sm font-medium text-gray-600">Total a pagar</td>
+                        <td class="px-6 py-4 text-right text-lg font-semibold text-gray-900">${{ order_total }}</td>
+                    </tr>
+                    {% endif %}
                 </tbody>
             </table>
         </div>
+
+        {% if order_items %}
+        <div class="px-6 pt-6">
+            <form method="post" action="{% url 'payments:create-session' %}">
+                {% csrf_token %}
+                <button
+                    type="submit"
+                    class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition"
+                >
+                    Proceder al pago
+                </button>
+            </form>
+        </div>
+        {% else %}
+        <div class="px-6 pt-6">
+            <p class="text-sm text-gray-500">Agrega productos para poder procesar el pago.</p>
+        </div>
+        {% endif %}
     </div>
 
     {% else %}
