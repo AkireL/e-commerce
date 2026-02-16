@@ -1,0 +1,28 @@
+Plan Order Cart Enhancements
+
+- Rutas y permisos
+  - Añadir endpoints POST `orders/cart/update-item/<int:pk>/` y `orders/cart/remove-item/<int:pk>/`, protegidos con `@login_required`, verificando que el `OrderProduct` pertenezca a la orden activa del usuario.
+  - Responder con JSON en peticiones AJAX; para solicitudes sin JS redirigir a `orders:my-orders` con mensajes de Django.
+
+- Reglas de negocio
+  - `update_item` recibe `quantity > 0`, calcula stock disponible y, si la cantidad supera el stock, ajusta al máximo permitido devolviendo `adjusted=True` y un mensaje informativo.
+  - Recalcula subtotal del artículo y total de la orden; elimina sesiones `PaymentSession` en estado `pending` cuando el carrito cambia.
+  - `remove_item` borra el `OrderProduct`, invalida sesiones pendientes y responde si la orden quedó vacía (`order_empty=True`).
+
+- Plantilla (`orders/templates/my_orders.html`)
+  - Reemplazar inputs numéricos por controles con botones “− / +”, display central y etiqueta “Máx. N”; usar atributos `data-quantity-control`, `data-update-url` y `data-remove-url`.
+  - Botón “Eliminar” por fila con confirmación (`data-confirm-message`) y botón de pago (`data-pay-button`) que se deshabilita si no hay artículos o durante peticiones.
+  - Contenedor para mensajes informativos y bloque `<noscript>` con formularios tradicionales.
+
+- JavaScript sin librerías
+  - Obtener CSRF desde cookies y usar `fetch` para POST.
+  - Atar eventos `click` a los botones “− / +`; cada cambio aplica límites, bloquea controles mientras espera respuesta y actualiza subtotales, total y etiqueta “Máx”.
+  - Botón eliminar: confirmar, enviar `fetch`, remover fila y actualizar totales; si el carrito queda vacío, mostrar estado correspondiente.
+  - Restaurar cantidades previas ante errores y reactivar controles/botón de pago al completar la petición.
+
+- Fallback sin JS
+  - Formularios individuales por fila (`method="post"`) apuntando a los mismos endpoints, que redirigen nuevamente al carrito con mensajes estándar.
+
+- Integración con pagos
+  - Cualquier cambio en el carrito elimina sesiones `PaymentSession` pendientes para evitar inconsistencias.
+  - El botón de pago solo se habilita cuando hay artículos y no hay peticiones en vuelo.
