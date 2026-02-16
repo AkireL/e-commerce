@@ -1,15 +1,19 @@
 from decimal import Decimal
 
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404
+from django.db.models import DecimalField, ExpressionWrapper, F, Sum
+from django.http import HttpResponseRedirect, JsonResponse
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
+from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, DetailView, TemplateView
 
 from payments.models import PaymentSession, PaymentSessionStatus
 
 from .forms import OrderProductForm
-from .models import Order
+from .models import Order, OrderProduct
 
 class MyOrdersView(LoginRequiredMixin, DetailView):
     model = Order
@@ -25,7 +29,10 @@ class MyOrdersView(LoginRequiredMixin, DetailView):
 
         if order:
             items = list(order.orderproduct_set.select_related("product"))
-            total = sum((item.product.price * item.quantity for item in items), Decimal("0.00"))
+            for item in items:
+                item.line_total = item.product.price * item.quantity
+
+            total = sum((item.line_total for item in items), Decimal("0.00"))
             context.update(
                 {
                     "order_items": items,
@@ -69,13 +76,11 @@ class OrderProcessedView(LoginRequiredMixin, TemplateView):
     template_name = "order_processed.html"
 
     def dispatch(self, request, *args, **kwargs):
-        # TODO: payments debe devolver el id de la orden y no el token de la sesion de pago porque el modulo orders no debe conocer nada del modulo payments, lo ideal es que el modulo orders tenga un servicio para obtener la orden por token y el modulo payments solo conozca ese servicio.
         token = kwargs.get("token")
         self.session = self._get_session(token)
         return super().dispatch(request, *args, **kwargs)
 
     def _get_session(self, token):
-        # TODO: hay que separar los dominios porque el modulo de payments no debe conocer nada del modulo de orders, lo ideal es que el modulo de orders tenga un servicio para obtener la orden por token y el modulo de payments solo conozca ese servicio.
         return get_object_or_404(
             self._session_queryset(),
             token=token,
@@ -83,7 +88,7 @@ class OrderProcessedView(LoginRequiredMixin, TemplateView):
             status=PaymentSessionStatus.COMPLETED,
         )
 
-    
+
     def _session_queryset(self):
         return PaymentSession.objects.select_related("order", "user").prefetch_related("items")
 
@@ -99,3 +104,150 @@ class OrderProcessedView(LoginRequiredMixin, TemplateView):
             }
         )
         return context
+
+
+def _is_ajax(request):
+    return request.headers.get("X-Requested-With") == "XMLHttpRequest"
+
+
+def _format_amount(value):
+    if value is None:
+        value = Decimal("0.00")
+    return format(value, ".2f")
+
+
+def _calculate_order_total(order):
+    total = order.orderproduct_set.annotate(
+        line_total=ExpressionWrapper(
+            F("product__price") * F("quantity"),
+            output_field=DecimalField(max_digits=12, decimal_places=2),
+        )
+    ).aggregate(total=Sum("line_total"))
+    return total.get("total") or Decimal("0.00")
+
+
+def _invalidate_pending_sessions(order):
+    order.payment_sessions.filter(status=PaymentSessionStatus.PENDING).delete()
+
+
+def _error_response(request, message, status=400):
+    if _is_ajax(request):
+        return JsonResponse({"success": False, "message": message}, status=status)
+    messages.error(request, message)
+    return redirect("my-orders")
+
+
+@login_required
+@require_POST
+def update_order_item(request, pk):
+    try:
+        order_item = OrderProduct.objects.select_related("order", "product").get(
+            pk=pk,
+            order__user=request.user,
+            order__is_active=True,
+        )
+    except OrderProduct.DoesNotExist:
+        return _error_response(request, "El artículo seleccionado no existe en tu orden.", status=404)
+
+    order = order_item.order
+
+    quantity_raw = request.POST.get("quantity")
+    try:
+        quantity = int(quantity_raw)
+    except (TypeError, ValueError):
+        return _error_response(request, "La cantidad debe ser un número válido.")
+
+    if quantity < 1:
+        return _error_response(request, "La cantidad debe ser al menos 1.")
+
+    stock = order_item.product.stock
+    adjusted = False
+
+    if stock <= 0:
+        order_item.delete()
+        _invalidate_pending_sessions(order)
+        order_total = _calculate_order_total(order)
+        message = "Retiramos este producto de tu carrito porque ya no está disponible."
+        if _is_ajax(request):
+            return JsonResponse(
+                {
+                    "success": True,
+                    "order_total": _format_amount(order_total),
+                    "order_empty": order_total == Decimal("0.00"),
+                    "removed": True,
+                    "available_stock": 0,
+                    "message": message,
+                }
+            )
+        messages.warning(request, message)
+        return redirect("my-orders")
+
+    if quantity > stock:
+        quantity = stock
+        adjusted = True
+
+    order_item.quantity = quantity
+    order_item.save(update_fields=["quantity"])
+
+    _invalidate_pending_sessions(order)
+
+    item_total = order_item.product.price * order_item.quantity
+    order_total = _calculate_order_total(order)
+
+    response_message = "Actualizamos la cantidad para ti." if adjusted else None
+
+    response_data = {
+        "success": True,
+        "quantity": order_item.quantity,
+        "item_total": _format_amount(item_total),
+        "order_total": _format_amount(order_total),
+        "adjusted": adjusted,
+        "removed": False,
+        "order_empty": order_total == Decimal("0.00"),
+        "available_stock": stock,
+        "message": response_message,
+    }
+
+    if _is_ajax(request):
+        return JsonResponse(response_data)
+
+    if adjusted:
+        messages.info(request, response_message)
+    else:
+        messages.success(request, "Cantidad actualizada.")
+    return redirect("my-orders")
+
+
+@login_required
+@require_POST
+def remove_order_item(request, pk):
+    try:
+        order_item = OrderProduct.objects.select_related("order", "product").get(
+            pk=pk,
+            order__user=request.user,
+            order__is_active=True,
+        )
+    except OrderProduct.DoesNotExist:
+        return _error_response(request, "El artículo que intentas eliminar no existe.", status=404)
+
+    order = order_item.order
+    product_name = order_item.product.name
+
+    order_item.delete()
+    _invalidate_pending_sessions(order)
+
+    order_total = _calculate_order_total(order)
+    order_empty = order_total == Decimal("0.00")
+
+    response_data = {
+        "success": True,
+        "order_total": _format_amount(order_total),
+        "order_empty": order_empty,
+        "message": f"{product_name} fue eliminado del carrito.",
+    }
+
+    if _is_ajax(request):
+        return JsonResponse(response_data)
+
+    messages.success(request, response_data["message"])
+    return redirect("my-orders")

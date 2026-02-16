@@ -9,7 +9,7 @@
     </div>
 
     {% if order %}
-    <div class="bg-white rounded-xl shadow-xs border-gray-100 overflow-hidden pb-6">
+    <div class="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden" data-cart-container>
         <!-- Order Info -->
         <div class="p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -32,7 +32,8 @@
             {% endif %}
         </div>
 
-        <!-- Table -->
+        <div class="mx-6 mb-4 hidden rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700" data-cart-message></div>
+
         <div class="overflow-x-auto">
             <table class="min-w-full text-sm">
                 <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
@@ -41,13 +42,14 @@
                         <th class="px-6 py-3 text-left">Cantidad</th>
                         <th class="px-6 py-3 text-right">Precio</th>
                         <th class="px-6 py-3 text-right">Total</th>
+                        <th class="px-6 py-3 text-right">Acciones</th>
                     </tr>
                 </thead>
 
-                <tbody class="divide-y divide-gray-100">
+                <tbody class="divide-y divide-gray-100" data-cart-body>
                     {% for item in order_items %}
-                    <tr class="hover:bg-gray-50 transition">
-                        <td class="px-6 py-">
+                    <tr class="hover:bg-gray-50 transition" data-item-row data-item-id="{{ item.pk }}">
+                        <td class="px-6 py-4">
                             <div class="flex items-center gap-4">
                                 {% if item.product.photo %}
                                     <img
@@ -61,52 +63,120 @@
                                     </div>
                                 {% endif %}
 
-                                <span class="font-medium text-gray-800">
-                                    {{ item.product.name }}
-                                </span>
+                                <div>
+                                    <span class="font-medium text-gray-800 block">
+                                        {{ item.product.name }}
+                                    </span>
+                                    <span class="text-xs text-gray-500">Disponible: {{ item.product.stock }}</span>
+                                </div>
                             </div>
                         </td>
 
-                        <td class="px-6 py-4 text-gray-700">
-                            {{ item.quantity }}
+                        <td class="px-6 py-4 text-gray-700 align-middle">
+                            <div class="flex gap-1">
+                                <div
+                                    class="inline-flex items-center gap-2 rounded-full border border-gray-200 px-3 py-1 bg-gray-50"
+                                    data-quantity-control
+                                    data-update-url="{% url 'cart-update-item' item.pk %}"
+                                    data-min="1"
+                                    data-max="{{ item.product.stock }}"
+                                    data-current="{{ item.quantity }}"
+                                >
+                                    <button
+                                        type="button"
+                                        class="w-7 h-7 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        data-qty-minus
+                                        aria-label="Reducir cantidad"
+                                        {% if item.quantity <= 1 %}disabled{% endif %}
+                                    >
+                                        &minus;
+                                    </button>
+                                    <span class="w-10 text-center font-medium text-gray-800 select-none" data-quantity-display>
+                                        {{ item.quantity }}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        class="w-7 h-7 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        data-qty-plus
+                                        aria-label="Incrementar cantidad"
+                                        {% if item.quantity >= item.product.stock %}disabled{% endif %}
+                                    >
+                                        +
+                                    </button>
+                                </div>
+                                <input type="hidden" value="{{ item.quantity }}" data-quantity-input>
+                                <noscript>
+                                    <form method="post" action="{% url 'cart-update-item' item.pk %}" class="flex items-center gap-2">
+                                        {% csrf_token %}
+                                        <input type="number" name="quantity" value="{{ item.quantity }}" min="1" max="{{ item.product.stock }}" class="w-20 border rounded px-2 py-1">
+                                        <button type="submit" class="px-3 py-1 rounded bg-blue-600 text-white text-xs">Actualizar</button>
+                                    </form>
+                                </noscript>
+                            </div>
                         </td>
 
                         <td class="px-6 py-4 text-right font-semibold text-gray-800">
-                            ${{ item.product.price }}
+                            ${{ item.product.price|floatformat:2 }}
                         </td>
 
                         <td class="px-6 py-4 text-right font-semibold text-gray-800">
-                            ${% widthratio item.product.price 1 item.quantity %}
+                            $<span data-item-total>{{ item.line_total|floatformat:2 }}</span>
+                        </td>
+
+                        <td class="px-6 py-4 text-right">
+                            <button
+                                type="button"
+                                class="inline-flex items-center px-4 py-2 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition text-xs font-medium"
+                                data-remove-button
+                                data-remove-url="{% url 'cart-remove-item' item.pk %}"
+                                data-confirm-message="¿Eliminar {{ item.product.name }} del carrito?"
+                            >
+                                Eliminar
+                            </button>
+                            <noscript>
+                                <form method="post" action="{% url 'cart-remove-item' item.pk %}" class="inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="px-3 py-1 rounded bg-red-600 text-white text-xs">Eliminar</button>
+                                </form>
+                            </noscript>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr data-empty-row>
+                        <td colspan="5" class="px-6 py-8 text-center text-sm text-gray-500">
+                            No hay productos en tu carrito todavía.
                         </td>
                     </tr>
                     {% endfor %}
-                    {% if order_items %}
-                    <tr class="bg-gray-50">
-                        <td colspan="3" class="px-6 py-4 text-right text-sm font-medium text-gray-600">Total a pagar</td>
-                        <td class="px-6 py-4 text-right text-lg font-semibold text-gray-900">${{ order_total }}</td>
+                    <tr class="bg-gray-50" data-total-row {% if not order_items %}hidden{% endif %}>
+                        <td colspan="4" class="px-6 py-4 text-right text-sm font-medium text-gray-600">
+                            Total a pagar
+                        </td>
+                        <td class="px-6 py-4 text-right text-lg font-semibold text-gray-900">
+                            $<span data-order-total>{{ order_total|floatformat:2 }}</span>
+                        </td>
                     </tr>
-                    {% endif %}
                 </tbody>
             </table>
         </div>
 
-        {% if order_items %}
-        <div class="px-6 pt-6">
+        <div class="px-6 pt-6" data-cart-actions {% if not order_items %}hidden{% endif %}>
             <form method="post" action="{% url 'payments:create-session' %}">
                 {% csrf_token %}
                 <button
                     type="submit"
                     class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition"
+                    data-pay-button
+                    {% if not order_items %}disabled{% endif %}
                 >
                     Proceder al pago
                 </button>
             </form>
         </div>
-        {% else %}
-        <div class="px-6 pt-6">
-            <p class="text-sm text-gray-500">Agrega productos para poder procesar el pago.</p>
+
+        <div class="px-6 pt-6 pb-6 text-sm text-gray-500" data-cart-empty {% if order_items %}hidden{% endif %}>
+            Agrega productos desde el catálogo para poder procesar el pago.
         </div>
-        {% endif %}
     </div>
 
     {% else %}
@@ -116,5 +186,334 @@
     </div>
     {% endif %}
 </div>
+
+<script>
+(function () {
+    const cartContainer = document.querySelector('[data-cart-container]');
+    if (!cartContainer) {
+        return;
+    }
+
+    const getCookie = (name) => {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) {
+            return parts.pop().split(';').shift();
+        }
+        return '';
+    };
+
+    const messageBox = cartContainer.querySelector('[data-cart-message]');
+    const orderTotalEl = cartContainer.querySelector('[data-order-total]');
+    const totalRow = cartContainer.querySelector('[data-total-row]');
+    const cartActions = cartContainer.querySelector('[data-cart-actions]');
+    const cartEmpty = cartContainer.querySelector('[data-cart-empty]');
+    const payButton = cartContainer.querySelector('[data-pay-button]');
+    const quantityControls = cartContainer.querySelectorAll('[data-quantity-control]');
+    const removeButtons = cartContainer.querySelectorAll('[data-remove-button]');
+    const csrftoken = getCookie('csrftoken');
+
+    const formatCurrency = (value) => {
+        const number = Number(value);
+        if (Number.isNaN(number)) {
+            return value;
+        }
+        return number.toFixed(2);
+    };
+
+    const setOrderTotal = (value) => {
+        if (orderTotalEl) {
+            orderTotalEl.textContent = formatCurrency(value);
+        }
+    };
+
+    const hasItems = () => cartContainer.querySelectorAll('[data-item-row]').length > 0;
+
+    const toggleEmptyState = () => {
+        const itemsPresent = hasItems();
+        const tableBody = cartContainer.querySelector('[data-cart-body]');
+        if (tableBody) {
+            const emptyRow = tableBody.querySelector('[data-empty-row]');
+            if (itemsPresent && emptyRow) {
+                emptyRow.remove();
+            } else if (!itemsPresent && !emptyRow) {
+                const row = document.createElement('tr');
+                row.dataset.emptyRow = 'true';
+                row.innerHTML = '<td colspan="5" class="px-6 py-8 text-center text-sm text-gray-500">No hay productos en tu carrito todavía.</td>';
+                tableBody.appendChild(row);
+            }
+        }
+
+        if (cartActions) {
+            cartActions.hidden = !itemsPresent;
+        }
+        if (totalRow) {
+            totalRow.hidden = !itemsPresent;
+        }
+        if (cartEmpty) {
+            cartEmpty.hidden = itemsPresent;
+        }
+        if (payButton) {
+            payButton.disabled = !itemsPresent;
+        }
+    };
+
+    const showMessage = (text, type = 'info') => {
+        if (!messageBox || !text) {
+            return;
+        }
+        const styles = {
+            info: 'border-blue-100 bg-blue-50 text-blue-700',
+            success: 'border-green-100 bg-green-50 text-green-700',
+            warning: 'border-yellow-100 bg-yellow-50 text-yellow-700',
+            error: 'border-red-100 bg-red-50 text-red-700',
+        };
+
+        messageBox.className = 'mx-6 mb-4 rounded-xl px-4 py-3 text-sm ' + (styles[type] || styles.info);
+        messageBox.textContent = text;
+        messageBox.classList.remove('hidden');
+
+        window.clearTimeout(messageBox._timeoutId);
+        messageBox._timeoutId = window.setTimeout(() => {
+            messageBox.classList.add('hidden');
+        }, 3200);
+    };
+
+    const request = (url, options = {}) => fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json',
+            ...(options.headers || {}),
+        },
+        body: options.body || null,
+    }).then(async (response) => {
+        const data = await response.json();
+        if (!response.ok || data.success === false) {
+            const message = data.message || 'No se pudo completar la operación.';
+            throw new Error(message);
+        }
+        return data;
+    });
+
+    const updateButtonStates = (control, quantity) => {
+        if (!control) {
+            return;
+        }
+        const min = Number(control.dataset.min || 1);
+        const max = Number(control.dataset.max || 0);
+        const minus = control.querySelector('[data-qty-minus]');
+        const plus = control.querySelector('[data-qty-plus]');
+
+        if (minus) {
+            minus.disabled = quantity <= min;
+        }
+        if (plus) {
+            plus.disabled = max > 0 && quantity >= max;
+        }
+    };
+
+    const setLoadingState = (row, control, isLoading) => {
+        if (row) {
+            row.classList.toggle('opacity-60', isLoading);
+        }
+        if (control) {
+            control.querySelectorAll('button').forEach((btn) => {
+                if (isLoading) {
+                    btn.dataset.prevDisabled = btn.disabled ? '1' : '0';
+                    btn.disabled = true;
+                } else {
+                    const wasDisabled = btn.dataset.prevDisabled === '1';
+                    delete btn.dataset.prevDisabled;
+                    btn.disabled = wasDisabled;
+                }
+            });
+        }
+        if (payButton) {
+            if (isLoading) {
+                payButton.dataset.prevDisabled = payButton.disabled ? '1' : '0';
+                payButton.disabled = true;
+            } else {
+                const wasDisabled = payButton.dataset.prevDisabled === '1';
+                delete payButton.dataset.prevDisabled;
+                payButton.disabled = wasDisabled ? true : !hasItems();
+            }
+        }
+    };
+
+    const applyQuantity = (row, control, quantity) => {
+        if (!control) {
+            return;
+        }
+        control.dataset.current = String(quantity);
+        const display = control.querySelector('[data-quantity-display]');
+        if (display) {
+            display.textContent = quantity;
+        }
+        if (row) {
+            const hidden = row.querySelector('[data-quantity-input]');
+            if (hidden) {
+                hidden.value = quantity;
+            }
+        }
+        updateButtonStates(control, quantity);
+    };
+
+    const sendUpdate = (row, control, quantity, previousQuantity) => {
+        const url = control?.dataset.updateUrl;
+        if (!url) {
+            control.dataset.updating = 'false';
+            setLoadingState(row, control, false);
+            return;
+        }
+
+        request(url, { body: new URLSearchParams({ quantity }) })
+            .then((data) => {
+                if (data.removed) {
+                    row?.remove();
+                    setOrderTotal(data.order_total);
+                    toggleEmptyState();
+                    if (payButton) {
+                        payButton.disabled = !hasItems();
+                    }
+                    if (data.message) {
+                        showMessage(data.message, 'info');
+                    }
+                    return;
+                }
+
+                const nextQuantity = Number(data.quantity);
+                applyQuantity(row, control, nextQuantity);
+
+                if (typeof data.available_stock !== 'undefined') {
+                    control.dataset.max = data.available_stock;
+                    const maxLabel = row ? row.querySelector('[data-max-label]') : null;
+                    if (maxLabel) {
+                        maxLabel.textContent = `Máx. ${data.available_stock}`;
+                    }
+                }
+
+                const totalCell = row ? row.querySelector('[data-item-total]') : null;
+                if (totalCell) {
+                    totalCell.textContent = formatCurrency(data.item_total);
+                }
+
+                setOrderTotal(data.order_total);
+
+                if (payButton) {
+                    payButton.disabled = !hasItems();
+                }
+
+                if (data.message) {
+                    showMessage(data.message, data.adjusted ? 'info' : 'success');
+                }
+            })
+            .catch((error) => {
+                applyQuantity(row, control, previousQuantity);
+                showMessage(error.message, 'error');
+            })
+            .finally(() => {
+                control.dataset.updating = 'false';
+                setLoadingState(row, control, false);
+                updateButtonStates(control, Number(control.dataset.current || control.dataset.min || 1));
+                toggleEmptyState();
+            });
+    };
+
+    const changeQuantity = (control, delta) => {
+        const row = control.closest('[data-item-row]');
+        if (!row || control.dataset.updating === 'true') {
+            return;
+        }
+
+        const min = Number(control.dataset.min || 1);
+        const max = Number(control.dataset.max || 0);
+        const current = Number(control.dataset.current || min);
+
+        let next = current + delta;
+        if (next < min) {
+            next = min;
+        }
+        if (max > 0 && next > max) {
+            next = max;
+        }
+
+        if (next === current) {
+            updateButtonStates(control, current);
+            return;
+        }
+
+        applyQuantity(row, control, next);
+        control.dataset.updating = 'true';
+        setLoadingState(row, control, true);
+        sendUpdate(row, control, next, current);
+    };
+
+    quantityControls.forEach((control) => {
+        const row = control.closest('[data-item-row]');
+        if (!row) {
+            return;
+        }
+
+        const minus = control.querySelector('[data-qty-minus]');
+        const plus = control.querySelector('[data-qty-plus]');
+        const hidden = row.querySelector('[data-quantity-input]');
+        const initial = Number(control.dataset.current || hidden?.value || control.dataset.min || 1);
+
+        applyQuantity(row, control, initial);
+
+        if (minus) {
+            minus.addEventListener('click', () => changeQuantity(control, -1));
+        }
+        if (plus) {
+            plus.addEventListener('click', () => changeQuantity(control, 1));
+        }
+    });
+
+    const handleRemove = (button) => {
+        const url = button.dataset.removeUrl;
+        const row = button.closest('[data-item-row]');
+        if (!url || !row) {
+            return;
+        }
+
+        const question = button.dataset.confirmMessage || '¿Eliminar este producto?';
+        if (!window.confirm(question)) {
+            return;
+        }
+
+        const control = row.querySelector('[data-quantity-control]');
+        setLoadingState(row, control, true);
+
+        request(url)
+            .then((data) => {
+                row.remove();
+                setOrderTotal(data.order_total);
+                toggleEmptyState();
+                if (payButton) {
+                    payButton.disabled = !hasItems();
+                }
+                if (data.message) {
+                    showMessage(data.message, 'success');
+                }
+                setLoadingState(row, control, false);
+            })
+            .catch((error) => {
+                showMessage(error.message, 'error');
+                setLoadingState(row, control, false);
+            });
+    };
+
+    removeButtons.forEach((button) => {
+        button.addEventListener('click', (event) => {
+            event.preventDefault();
+            handleRemove(button);
+        });
+    });
+
+    toggleEmptyState();
+})();
+</script>
 
 {% endblock %}
