@@ -143,6 +143,8 @@ def _calculate_order_total(order):
 
 
 def _invalidate_pending_sessions(order):
+    # TODO: Order no debe consumir directamente los modelos del modulo pago dado que son de diferente dominio
+
     PaymentSession.objects.filter(
         order_id=order.id,
         status=PaymentSessionStatus.PENDING
@@ -171,6 +173,7 @@ def update_order_item(request, pk):
     order = order_item.order
 
     try:
+        # TODO: Order no debe consumir directamente los modelos del modulo producto dado que son de diferente dominio
         product = Product.objects.get(pk=order_item.product_id)
     except Product.DoesNotExist:
         order_item.delete()
@@ -216,7 +219,7 @@ def update_order_item(request, pk):
 
     _invalidate_pending_sessions(order)
 
-    item_total = product.price * order_item.quantity
+    item_total = order_item.product_price * order_item.quantity
     order_total = _calculate_order_total(order)
 
     response_message = "Actualizamos la cantidad para ti." if adjusted else None
