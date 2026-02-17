@@ -19,9 +19,9 @@ def create_session_view(request):
     if request.method != "POST":
         return HttpResponseNotAllowed(["POST"])
 
+    # TODO: aqui tambien desacoplar esto porque pertenece a otro dominio
     order = (
         Order.objects
-        .prefetch_related("orderproduct_set__product")
         .filter(user_id=request.user.id, is_active=True, )
         .first()
     )
@@ -31,7 +31,7 @@ def create_session_view(request):
         return redirect("my-orders")
 
     try:
-        session = create_payment_session(order, request.user)
+        session = create_payment_session(order, request.user.id, request.user.username, request.user.email)
     except EmptyOrderError as exc:
         messages.error(request, str(exc))
         return redirect("my-orders")
@@ -47,9 +47,11 @@ class PaymentCheckoutView(LoginRequiredMixin, FormView):
     def dispatch(self, request, *args, **kwargs):
         token = kwargs.get("token")
         self.session = get_object_or_404(
-            PaymentSession.objects.select_related("order", "user").prefetch_related("items"),
+            PaymentSession.objects.prefetch_related("items"),
             token=token,
-            user=request.user,
+            user_id=request.user.id,
+            user_username=request.user.username,
+            user_email=request.user.email,
         )
 
         if self.session.status == PaymentSessionStatus.COMPLETED:
@@ -74,7 +76,7 @@ class PaymentCheckoutView(LoginRequiredMixin, FormView):
         self.session.save(update_fields=["status", "completed_at", "updated_at"])
 
         # TODO: Esta logica no debe ir aqui porque es parte del dominio del orders, hay que crear un servicio en orders para marcar la orden como pagada
-        order = self.session.order
+        order = Order.objects.filter(id=self.session.order_id).first()
         if order.is_active:
             order.is_active = False
             order.save(update_fields=["is_active"])

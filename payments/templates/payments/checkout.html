@@ -12,7 +12,7 @@
             <section class="bg-white rounded-2xl shadow-sm border border-gray-100">
                 <header class="px-6 py-5 border-b border-gray-100">
                     <h2 class="text-lg font-semibold text-gray-800">Resumen de la orden</h2>
-                    <p class="text-sm text-gray-500">Orden #{{ session.order.id }} · {{ session.created_at|date:"d M Y" }}</p>
+                    <p class="text-sm text-gray-500">Orden #{{ session.order_id }} · {{ session.created_at|date:"d M Y" }}</p>
                 </header>
                 <div class="divide-y divide-gray-100">
                     {% for item in items %}

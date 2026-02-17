@@ -7,10 +7,9 @@ from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.views.decorators.http import require_POST
-from django.views.generic import DetailView,CreateView, TemplateView
+from django.views.generic import FormView, DetailView, TemplateView
 
 from payments.models import PaymentSession, PaymentSessionStatus
-from products.models import Product
 
 from .forms import OrderProductForm
 from .models import Order, OrderProduct
@@ -44,7 +43,7 @@ class MyOrdersView(LoginRequiredMixin, DetailView):
 
         return context
     
-class CreateOrderProductView(LoginRequiredMixin, CreateView):
+class CreateOrderProductView(LoginRequiredMixin, FormView):
     template_name="create_order_product.html"
     form_class = OrderProductForm
     success_url = reverse_lazy('my-orders')
@@ -52,19 +51,21 @@ class CreateOrderProductView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         order, _ = Order.objects.get_or_create(
             is_active=True,
-            user=self.request.user
+            user_id=self.request.user.id,
         )
 
         quantity = form.cleaned_data["quantity"]
         product = form.cleaned_data["product"]
         
-        order_product, created = order.orderproduct_set.get_or_create(
-            product=product,
+        order_product, created = order.items.get_or_create(
+            product_id=product.id,
+            product_name=product.name,
+            product_price=product.price,
             defaults={"quantity": quantity}
         )
 
         if not created:
-            order.orderproduct_set.filter(pk=order_product.pk).update(quantity=quantity)
+            order.items.filter(pk=order_product.pk).update(quantity=quantity)
             order_product.refresh_from_db(fields=["quantity"])
 
         self.object = order_product
@@ -76,29 +77,33 @@ class OrderProcessedView(LoginRequiredMixin, TemplateView):
 
     def dispatch(self, request, *args, **kwargs):
         token = kwargs.get("token")
-        self.session = self._get_session(token)
+        self.session = self._get_session(token, request)
         return super().dispatch(request, *args, **kwargs)
 
-    def _get_session(self, token):
+    def _get_session(self, token, request):
+        
+        # TODO: Order no debe consumir directamente los modelos del modulo pago dado que son de diferente dominio
         return get_object_or_404(
             self._session_queryset(),
             token=token,
-            user=self.request.user,
+            user_id=request.user.id,
             status=PaymentSessionStatus.COMPLETED,
         )
 
 
     def _session_queryset(self):
-        return PaymentSession.objects.select_related("order", "user").prefetch_related("items")
+        # TODO: Order no debe consumir directamente los modelos del modulo pago dado que son de diferente dominio
+        return PaymentSession.objects.prefetch_related("items")
+    
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        order = self.session.order
+        order_id = self.session.order_id
         items = self.session.items.all()
         context.update(
             {
                 "session": self.session,
-                "order": order,
+                "order": order_id,
                 "items": items,
             }
         )
@@ -126,6 +131,7 @@ def _calculate_order_total(order):
 
 
 def _invalidate_pending_sessions(order):
+    # TODO: Order no debe consumir directamente los modelos del modulo pago dado que son de diferente dominio
     order.payment_sessions.filter(status=PaymentSessionStatus.PENDING).delete()
 
 
