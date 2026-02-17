@@ -65,7 +65,7 @@
 
                                 <div>
                                     <span class="font-medium text-gray-800 block">
-                                        {{ item.product.name }}
+                                        {{ item.product_name }}
                                     </span>
                                     <span class="text-xs text-gray-500">Disponible: {{ item.product.stock }}</span>
                                 </div>
@@ -116,7 +116,7 @@
                         </td>
 
                         <td class="px-6 py-4 text-right font-semibold text-gray-800">
-                            ${{ item.product.price|floatformat:2 }}
+                            ${{ item.product_price|floatformat:2 }}
                         </td>
 
                         <td class="px-6 py-4 text-right font-semibold text-gray-800">

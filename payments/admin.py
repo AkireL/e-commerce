@@ -5,8 +5,8 @@ from .models import PaymentSession, PaymentItem
 
 @admin.register(PaymentSession)
 class PaymentSessionAdmin(admin.ModelAdmin):
-    list_display = ("id", "order", "user", "status", "amount_total", "created_at")
-    search_fields = ("order__id", "user__username", "token")
+    list_display = ("id", "order_id", "order_number", "user_username", "status", "amount_total", "created_at")
+    search_fields = ("order_number", "user_username", "token")
     list_filter = ("status", "created_at")
 
 

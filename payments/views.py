@@ -20,9 +20,9 @@ def create_session_view(request):
         return HttpResponseNotAllowed(["POST"])
 
     order = (
-        Order.objects.select_related("user")
+        Order.objects
         .prefetch_related("orderproduct_set__product")
-        .filter(user=request.user, is_active=True)
+        .filter(user_id=request.user.id, is_active=True, )
         .first()
     )
 

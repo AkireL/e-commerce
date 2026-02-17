@@ -1,7 +1,12 @@
-from django.forms import ModelForm
-from .models import OrderProduct
+from django import forms
 
-class OrderProductForm(ModelForm):
-    class Meta:
-        model=OrderProduct
-        fields = ["product", "quantity"]
+from products.models import Product
+
+
+class OrderProductForm(forms.Form):
+    product = forms.ModelChoiceField(
+        queryset=Product.objects.filter(available=True),
+        label="Producto",
+        empty_label=None,
+    )
+    quantity = forms.IntegerField(min_value=1, initial=1, label="Cantidad")

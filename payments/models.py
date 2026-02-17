@@ -1,8 +1,8 @@
 import uuid
 from decimal import Decimal
 
-from django.conf import settings
 from django.db import models
+from django.urls import reverse
 
 
 class PaymentSessionStatus(models.TextChoices):
@@ -12,8 +12,11 @@ class PaymentSessionStatus(models.TextChoices):
 
 
 class PaymentSession(models.Model):
-    order = models.ForeignKey("orders.Order", on_delete=models.CASCADE, related_name="payment_sessions")
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="payment_sessions")
+    order_id = models.PositiveIntegerField(db_index=True, default=1)
+    order_number = models.CharField(max_length=64, blank=True)
+    user_id = models.PositiveIntegerField(db_index=True, default=1)
+    user_username = models.CharField(max_length=150, blank=True)
+    user_email = models.EmailField(blank=True)
     token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     status = models.CharField(max_length=16, choices=PaymentSessionStatus.choices, default=PaymentSessionStatus.PENDING)
     amount_total = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
@@ -26,15 +29,14 @@ class PaymentSession(models.Model):
         ordering = ("-created_at",)
 
     def __str__(self) -> str:
-        return f"PaymentSession {self.token} - {self.get_status_display()}"
+        order_display = self.order_number or f"Orden {self.order_id}" if self.order_id else "Orden"
+        return f"PaymentSession {self.token} ({order_display}) - {self.get_status_display()}"
 
     @property
     def is_completed(self) -> bool:
         return self.status == PaymentSessionStatus.COMPLETED
 
     def get_checkout_url(self) -> str:
-        from django.urls import reverse
-
         return reverse("payments:checkout", args=[self.token])
 
 

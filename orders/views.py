@@ -3,14 +3,14 @@ from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import DecimalField, ExpressionWrapper, F, Sum
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.views.decorators.http import require_POST
-from django.views.generic import CreateView, DetailView, TemplateView
+from django.views.generic import DetailView,CreateView, TemplateView
 
 from payments.models import PaymentSession, PaymentSessionStatus
+from products.models import Product
 
 from .forms import OrderProductForm
 from .models import Order, OrderProduct
@@ -21,17 +21,16 @@ class MyOrdersView(LoginRequiredMixin, DetailView):
     context_object_name = "order"
 
     def get_object(self):
-        return Order.objects.filter(is_active=True, user=self.request.user).first()
+        return Order.objects.filter(
+            is_active=True, 
+            user_id=self.request.user.id).first()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         order = context.get("order")
 
         if order:
-            items = list(order.orderproduct_set.select_related("product"))
-            for item in items:
-                item.line_total = item.product.price * item.quantity
-
+            items = list(order.items.all())
             total = sum((item.line_total for item in items), Decimal("0.00"))
             context.update(
                 {
