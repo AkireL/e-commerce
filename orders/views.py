@@ -129,7 +129,7 @@ def _is_ajax(request):
 def _format_amount(value):
     if value is None:
         value = Decimal("0.00")
-    return format(value, ".2f")
+    return f"{value:.2f}"
 
 
 def _calculate_order_total(order):
@@ -143,8 +143,10 @@ def _calculate_order_total(order):
 
 
 def _invalidate_pending_sessions(order):
-    # TODO: Order no debe consumir directamente los modelos del modulo pago dado que son de diferente dominio
-    order.payment_sessions.filter(status=PaymentSessionStatus.PENDING).delete()
+    PaymentSession.objects.filter(
+        order_id=order.id,
+        status=PaymentSessionStatus.PENDING
+    ).delete()
 
 
 def _error_response(request, message, status=400):
