@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import DecimalField, ExpressionWrapper, F, Sum
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
@@ -10,6 +11,7 @@ from django.views.decorators.http import require_POST
 from django.views.generic import FormView, DetailView, TemplateView
 
 from payments.models import PaymentSession, PaymentSessionStatus
+from products.models import Product
 
 from .forms import OrderProductForm
 from .models import Order, OrderProduct
@@ -31,6 +33,16 @@ class MyOrdersView(LoginRequiredMixin, DetailView):
         if order:
             items = list(order.items.all())
             total = sum((item.line_total for item in items), Decimal("0.00"))
+            
+            product_ids = [item.product_id for item in items]
+            products = {
+                p.id: p for p in Product.objects.filter(id__in=product_ids)
+            }
+            
+            for index, item in enumerate(items):
+                items[index].product = products.get(item.product_id)
+                
+            
             context.update(
                 {
                     "order_items": items,
@@ -121,9 +133,9 @@ def _format_amount(value):
 
 
 def _calculate_order_total(order):
-    total = order.orderproduct_set.annotate(
+    total = order.items.annotate(
         line_total=ExpressionWrapper(
-            F("product__price") * F("quantity"),
+            F("product_price") * F("quantity"),
             output_field=DecimalField(max_digits=12, decimal_places=2),
         )
     ).aggregate(total=Sum("line_total"))
@@ -146,15 +158,21 @@ def _error_response(request, message, status=400):
 @require_POST
 def update_order_item(request, pk):
     try:
-        order_item = OrderProduct.objects.select_related("order", "product").get(
+        order_item = OrderProduct.objects.get(
             pk=pk,
-            order__user=request.user,
+            order__user_id=request.user.id,
             order__is_active=True,
         )
     except OrderProduct.DoesNotExist:
         return _error_response(request, "El artículo seleccionado no existe en tu orden.", status=404)
 
     order = order_item.order
+
+    try:
+        product = Product.objects.get(pk=order_item.product_id)
+    except Product.DoesNotExist:
+        order_item.delete()
+        return _error_response(request, "El producto ya no está disponible.", status=404)
 
     quantity_raw = request.POST.get("quantity")
     try:
@@ -165,7 +183,7 @@ def update_order_item(request, pk):
     if quantity < 1:
         return _error_response(request, "La cantidad debe ser al menos 1.")
 
-    stock = order_item.product.stock
+    stock = product.stock
     adjusted = False
 
     if stock <= 0:
@@ -196,7 +214,7 @@ def update_order_item(request, pk):
 
     _invalidate_pending_sessions(order)
 
-    item_total = order_item.product.price * order_item.quantity
+    item_total = product.price * order_item.quantity
     order_total = _calculate_order_total(order)
 
     response_message = "Actualizamos la cantidad para ti." if adjusted else None
@@ -227,16 +245,16 @@ def update_order_item(request, pk):
 @require_POST
 def remove_order_item(request, pk):
     try:
-        order_item = OrderProduct.objects.select_related("order", "product").get(
+        order_item = OrderProduct.objects.get(
             pk=pk,
-            order__user=request.user,
+            order__user_id=request.user.id,
             order__is_active=True,
         )
     except OrderProduct.DoesNotExist:
         return _error_response(request, "El artículo que intentas eliminar no existe.", status=404)
 
     order = order_item.order
-    product_name = order_item.product.name
+    product_name = order_item.product_name
 
     order_item.delete()
     _invalidate_pending_sessions(order)
