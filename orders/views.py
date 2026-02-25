@@ -1,20 +1,26 @@
 from decimal import Decimal
+import uuid
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import DecimalField, ExpressionWrapper, F, Sum
 from django.http import HttpResponseRedirect, JsonResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import FormView, DetailView, TemplateView
 
-from payments.models import PaymentSession, PaymentSessionStatus
-from products.models import Product
-
 from .forms import OrderProductForm
+from .http_client import (
+    get_payment_completed_session,
+    get_products_available,
+    get_products_info,
+    get_products_stock,
+    invalidate_payment_sessions,
+)
 from .models import Order, OrderProduct
+
 
 class MyOrdersView(LoginRequiredMixin, DetailView):
     model = Order
@@ -24,7 +30,8 @@ class MyOrdersView(LoginRequiredMixin, DetailView):
     def get_object(self):
         return Order.objects.filter(
             is_active=True, 
-            user_id=self.request.user.id).first()
+            user_id=self.request.user.id
+        ).first()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -35,17 +42,29 @@ class MyOrdersView(LoginRequiredMixin, DetailView):
             total = sum((item.line_total for item in items), Decimal("0.00"))
             
             product_ids = [item.product_id for item in items]
-            products = {
-                p.id: p for p in Product.objects.filter(id__in=product_ids)
-            }
+            products = get_products_info(product_ids)
             
-            for index, item in enumerate(items):
-                items[index].product = products.get(item.product_id)
-                
+            enriched_items = []
+            for item in items:
+                product_data = products.get(str(item.product_id)) or {}
+                item_dict = {
+                    "pk": item.id,
+                    "id": item.id,
+                    "product_id": item.product_id,
+                    "product_name": item.product_name,
+                    "product_price": item.product_price,
+                    "quantity": item.quantity,
+                    "line_total": item.line_total,
+                    "product": {
+                        "stock": product_data.get("stock", 0),
+                        "photo_url": product_data.get("photo_url"),
+                    },
+                }
+                enriched_items.append(item_dict)
             
             context.update(
                 {
-                    "order_items": items,
+                    "order_items": enriched_items,
                     "order_total": total,
                 }
             )
@@ -54,11 +73,17 @@ class MyOrdersView(LoginRequiredMixin, DetailView):
         context.setdefault("order_total", Decimal("0.00"))
 
         return context
-    
+
+
 class CreateOrderProductView(LoginRequiredMixin, FormView):
-    template_name="create_order_product.html"
+    template_name = "create_order_product.html"
     form_class = OrderProductForm
     success_url = reverse_lazy('my-orders')
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['products'] = get_products_available()
+        return kwargs
 
     def form_valid(self, form):
         order, _ = Order.objects.get_or_create(
@@ -67,12 +92,13 @@ class CreateOrderProductView(LoginRequiredMixin, FormView):
         )
 
         quantity = form.cleaned_data["quantity"]
-        product = form.cleaned_data["product"]
+        product_id = int(form.cleaned_data["product"])
+        product_data = form.get_product_data(product_id)
         
         order_product, created = order.items.get_or_create(
-            product_id=product.id,
-            product_name=product.name,
-            product_price=product.price,
+            product_id=product_id,
+            product_name=product_data['name'],
+            product_price=product_data['price'],
             defaults={"quantity": quantity}
         )
 
@@ -88,35 +114,31 @@ class OrderProcessedView(LoginRequiredMixin, TemplateView):
     template_name = "order_processed.html"
 
     def dispatch(self, request, *args, **kwargs):
-        token = kwargs.get("token")
-        self.session = self._get_session(token, request)
+        token_raw = kwargs.get("token")
+        if token_raw is None:
+            messages.error(request, "Token no proporcionado.")
+            return redirect("my-orders")
+        
+        try:
+            token = uuid.UUID(str(token_raw))
+        except (ValueError, AttributeError):
+            messages.error(request, "Token inválido.")
+            return redirect("my-orders")
+        
+        self.session_data = get_payment_completed_session(str(token), request.user.id)
+        if self.session_data is None:
+            return redirect("my-orders")
         return super().dispatch(request, *args, **kwargs)
 
-    def _get_session(self, token, request):
-        
-        # TODO: Order no debe consumir directamente los modelos del modulo pago dado que son de diferente dominio
-        return get_object_or_404(
-            self._session_queryset(),
-            token=token,
-            user_id=request.user.id,
-            status=PaymentSessionStatus.COMPLETED,
-        )
-
-
-    def _session_queryset(self):
-        # TODO: Order no debe consumir directamente los modelos del modulo pago dado que son de diferente dominio
-        return PaymentSession.objects.prefetch_related("items")
-    
-
     def get_context_data(self, **kwargs):
+
         context = super().get_context_data(**kwargs)
-        order_id = self.session.order_id
-        items = self.session.items.all()
+        
         context.update(
             {
-                "session": self.session,
-                "order": order_id,
-                "items": items,
+                "session": self.session_data,
+                "order": self.session_data.get("order_id"),
+                "items": self.session_data.get("items", []),
             }
         )
         return context
@@ -142,15 +164,6 @@ def _calculate_order_total(order):
     return total.get("total") or Decimal("0.00")
 
 
-def _invalidate_pending_sessions(order):
-    # TODO: Order no debe consumir directamente los modelos del modulo pago dado que son de diferente dominio
-
-    PaymentSession.objects.filter(
-        order_id=order.id,
-        status=PaymentSessionStatus.PENDING
-    ).delete()
-
-
 def _error_response(request, message, status=400):
     if _is_ajax(request):
         return JsonResponse({"success": False, "message": message}, status=status)
@@ -172,10 +185,10 @@ def update_order_item(request, pk):
 
     order = order_item.order
 
-    try:
-        # TODO: Order no debe consumir directamente los modelos del modulo producto dado que son de diferente dominio
-        product = Product.objects.get(pk=order_item.product_id)
-    except Product.DoesNotExist:
+    stocks = get_products_stock([order_item.product_id])
+    stock = stocks.get(str(order_item.product_id), 0)
+    
+    if not stock:
         order_item.delete()
         return _error_response(request, "El producto ya no está disponible.", status=404)
 
@@ -188,12 +201,11 @@ def update_order_item(request, pk):
     if quantity < 1:
         return _error_response(request, "La cantidad debe ser al menos 1.")
 
-    stock = product.stock
     adjusted = False
 
     if stock <= 0:
         order_item.delete()
-        _invalidate_pending_sessions(order)
+        invalidate_payment_sessions(order.id)
         order_total = _calculate_order_total(order)
         message = "Retiramos este producto de tu carrito porque ya no está disponible."
         if _is_ajax(request):
@@ -217,7 +229,7 @@ def update_order_item(request, pk):
     order_item.quantity = quantity
     order_item.save(update_fields=["quantity"])
 
-    _invalidate_pending_sessions(order)
+    invalidate_payment_sessions(order.id)
 
     item_total = order_item.product_price * order_item.quantity
     order_total = _calculate_order_total(order)
@@ -262,7 +274,7 @@ def remove_order_item(request, pk):
     product_name = order_item.product_name
 
     order_item.delete()
-    _invalidate_pending_sessions(order)
+    invalidate_payment_sessions(order.id)
 
     order_total = _calculate_order_total(order)
     order_empty = order_total == Decimal("0.00")

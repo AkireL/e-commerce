@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="max-w-3xl mx-auto px-4 py-8">
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-900">Agregar Producto</h1>
+        <p class="text-gray-500 mt-1">Selecciona un producto y cantidad para agregar a tu orden</p>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-xs border border-gray-100 p-6">
+        <form method="post" action="{% url 'add_product_order' %}">
+            {% csrf_token %}
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Producto</label>
+                {{ form.product }}
+            </div>
+            
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Cantidad</label>
+                {{ form.quantity }}
+            </div>
+            
+            <div class="flex gap-4">
+                <button
+                    type="submit"
+                    class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition"
+                >
+                    Agregar a la orden
+                </button>
+                <a
+                    href="{% url 'my-orders' %}"
+                    class="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition"
+                >
+                    Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

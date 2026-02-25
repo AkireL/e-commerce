@@ -1,17 +1,21 @@
+import json
+import uuid
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponseNotAllowed
-from django.shortcuts import get_object_or_404, redirect
-from django.utils import timezone
+from django.shortcuts import redirect
 from django.views.generic import FormView
-
-from orders.models import Order
 
 from .exceptions import EmptyOrderError
 from .forms import PaymentForm
-from .models import PaymentSession, PaymentSessionStatus
-from .services import create_payment_session
+from .http_client import mark_order_as_paid
+from .services import (
+    complete_payment_session,
+    create_payment_session,
+    get_pending_session_for_checkout,
+)
 
 
 @login_required
@@ -19,25 +23,36 @@ def create_session_view(request):
     if request.method != "POST":
         return HttpResponseNotAllowed(["POST"])
 
-    # TODO: aqui tambien desacoplar esto porque pertenece a otro dominio
-    order = (
-        Order.objects
-        .filter(user_id=request.user.id, is_active=True, )
-        .first()
-    )
-
-    if not order:
-        messages.error(request, "No se encontró una orden activa para procesar.")
+    order_id = request.POST.get("order_id")
+    items_raw = request.POST.getlist("items")
+    
+    if not order_id or not items_raw:
+        messages.error(request, "No se encontró información de la orden.")
+        return redirect("my-orders")
+    
+    try:
+        items = [json.loads(item) for item in items_raw]
+    except json.JSONDecodeError:
+        messages.error(request, "Error al procesar los productos.")
+        return redirect("my-orders")
+    
+    if not items:
+        messages.error(request, "La orden no tiene productos para pagar.")
         return redirect("my-orders")
 
+    order_data = {
+        "id": int(order_id),
+        "items": items,
+    }
+
     try:
-        session = create_payment_session(order, request.user.id, request.user.username, request.user.email)
+        session_data = create_payment_session(order_data, request.user.id, request.user.username, request.user.email)
     except EmptyOrderError as exc:
         messages.error(request, str(exc))
         return redirect("my-orders")
 
     messages.info(request, "Redirigiéndote a la pasarela de pago simulada.")
-    return redirect(session.get_checkout_url())
+    return redirect("payments:checkout", token=session_data['token'])
 
 
 class PaymentCheckoutView(LoginRequiredMixin, FormView):
@@ -45,18 +60,28 @@ class PaymentCheckoutView(LoginRequiredMixin, FormView):
     form_class = PaymentForm
 
     def dispatch(self, request, *args, **kwargs):
-        token = kwargs.get("token")
-        self.session = get_object_or_404(
-            PaymentSession.objects.prefetch_related("items"),
-            token=token,
-            user_id=request.user.id,
-            user_username=request.user.username,
-            user_email=request.user.email,
+        token_raw = kwargs.get("token")
+        if token_raw is None:
+            messages.error(request, "Token no proporcionado.")
+            return redirect("my-orders")
+        
+        try:
+            token = uuid.UUID(str(token_raw))
+        except (ValueError, AttributeError):
+            messages.error(request, "Token inválido.")
+            return redirect("my-orders")
+        
+        self.session_data = get_pending_session_for_checkout(
+            token, request.user.id, request.user.username, request.user.email
         )
 
-        if self.session.status == PaymentSessionStatus.COMPLETED:
+        if self.session_data is None:
+            messages.error(request, "Sesión de pago no encontrada.")
+            return redirect("my-orders")
+
+        if self.session_data.get('status') == "completed":
             messages.info(request, "Esta sesión ya fue procesada.")
-            return redirect("order-processed", token=self.session.token)
+            return redirect("order-processed", token=self.session_data.get('token'))
 
         return super().dispatch(request, *args, **kwargs)
 
@@ -64,24 +89,15 @@ class PaymentCheckoutView(LoginRequiredMixin, FormView):
         context = super().get_context_data(**kwargs)
         context.update(
             {
-                "session": self.session,
-                "items": self.session.items.all(),
+                "session": self.session_data,
+                "items": self.session_data.get('items', []),
             }
         )
         return context
 
     def form_valid(self, form):
-        self.session.status = PaymentSessionStatus.COMPLETED
-        self.session.completed_at = timezone.now()
-        self.session.save(update_fields=["status", "completed_at", "updated_at"])
-
-        # TODO: Esta logica no debe ir aqui porque es parte del dominio del orders, hay que crear un servicio en orders para marcar la orden como pagada
-        order = Order.objects.filter(id=self.session.order_id).first()
-        if order.is_active:
-            order.is_active = False
-            order.save(update_fields=["is_active"])
+        complete_payment_session(self.session_data['token'])
+        mark_order_as_paid(self.session_data['order_id'])
 
         messages.success(self.request, "Pago completado. ¡Gracias por tu compra!")
-        
-        # TODO: Usar el id de la orden en vez del token porque en el modulo orders solo conoce el id.
-        return redirect("order-processed", token=self.session.token)
+        return redirect("order-processed", token=self.session_data['token'])

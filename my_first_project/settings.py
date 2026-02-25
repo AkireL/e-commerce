@@ -135,3 +135,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_REDIRECT_URL = 'profile'
 LOGOUT_REDIRECT_URL = 'login'
 LOGIN_URL = 'login'
+
+INTERNAL_API_BASE_URL = 'http://127.0.0.1:8000'
+DEBUG=True

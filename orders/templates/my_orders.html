@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
+{% load l10n %}
 {% block content %}
-
 <div class="max-w-5xl mx-auto px-4 py-8">
     <!-- Header -->
     <div class="mb-6">
@@ -51,9 +51,9 @@
                     <tr class="hover:bg-gray-50 transition" data-item-row data-item-id="{{ item.pk }}">
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-4">
-                                {% if item.product.photo %}
+                                {% if item.product.photo_url %}
                                     <img
-                                        src="{{ item.product.photo.url }}"
+                                        src="{{ item.product.photo_url }}"
                                         alt="{{ item.product_name }}"
                                         class="w-12 h-12 rounded-lg object-cover"
                                     >
@@ -116,11 +116,11 @@
                         </td>
 
                         <td class="px-6 py-4 text-right font-semibold text-gray-800">
-                            ${{ item.product_price|floatformat:2 }}
+                            ${{ item.product_price }}
                         </td>
 
                         <td class="px-6 py-4 text-right font-semibold text-gray-800">
-                            $<span data-item-total>{{ item.line_total|floatformat:2 }}</span>
+                            $<span data-item-total>{{ item.line_total }}</span>
                         </td>
 
                         <td class="px-6 py-4 text-right">
@@ -153,7 +153,7 @@
                             Total a pagar
                         </td>
                         <td class="px-6 py-4 text-right text-lg font-semibold text-gray-900">
-                            $<span data-order-total>{{ order_total|floatformat:2 }}</span>
+                            $<span data-order-total>{{ order_total }}</span>
                         </td>
                     </tr>
                 </tbody>
@@ -163,6 +163,10 @@
         <div class="px-6 pt-6" data-cart-actions {% if not order_items %}hidden{% endif %}>
             <form method="post" action="{% url 'payments:create-session' %}">
                 {% csrf_token %}
+                <input type="hidden" name="order_id" value="{{ order.id }}">
+                {% for item in order_items %}
+                <input type="hidden" name="items" value='{"product_id": {{ item.product_id }}, "product_name": "{{ item.product_name }}", "product_price": "{{ item.product_price|unlocalize}}", "quantity": {{ item.quantity }}}'>
+                {% endfor %}
                 <button
                     type="submit"
                     class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition"
