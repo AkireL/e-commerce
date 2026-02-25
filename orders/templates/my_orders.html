@@ -116,11 +116,11 @@
                         </td>
 
                         <td class="px-6 py-4 text-right font-semibold text-gray-800">
-                            ${{ item.product_price }}
+                            ${{ item.product_price| unlocalize }}
                         </td>
 
                         <td class="px-6 py-4 text-right font-semibold text-gray-800">
-                            $<span data-item-total>{{ item.line_total }}</span>
+                            $<span data-item-total>{{ item.line_total | unlocalize }}</span>
                         </td>
 
                         <td class="px-6 py-4 text-right">
@@ -153,7 +153,7 @@
                             Total a pagar
                         </td>
                         <td class="px-6 py-4 text-right text-lg font-semibold text-gray-900">
-                            $<span data-order-total>{{ order_total }}</span>
+                            $<span data-order-total>{{ order_total | unlocalize }}</span>
                         </td>
                     </tr>
                 </tbody>
