@@ -1,3 +1,4 @@
 Django>=6.0
 python-dotenv
 pillow==12.1.0
+python-dotenv==1.2.1
