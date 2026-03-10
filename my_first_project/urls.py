@@ -24,7 +24,6 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 urlpatterns = [
     path('profile/', ProfileView.as_view(), name='profile'),
     path('admin/', admin.site.urls),
-    path('card/', include('app_1.urls')),
     path('product/', include('products.urls')),
     path('users/', include('users.urls')),
     path('orders/', include('orders.urls')),
