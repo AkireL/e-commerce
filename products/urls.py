@@ -6,7 +6,7 @@ from django.views.decorators.http import require_POST
 
 from .models import Product
 from .views import ListProductsView, CreateProductView, UpdateProductView
-from .api import products_info_view, products_stock_view, products_available_view
+from .api import ProductsAvailableView, ProductsInfoView, ProductsStockView
 
 
 @require_POST
@@ -21,7 +21,7 @@ urlpatterns = [
     path('add', CreateProductView.as_view(), name="add_product"),
     path('edit/<int:pk>', UpdateProductView.as_view(), name="edit_product"),
     path('delete/<int:pk>', delete_product, name="delete_product"),
-    path('api/products-available/', products_available_view, name='api-products-available'),
-    path('api/products-info/', products_info_view, name='api-products-info'),
-    path('api/product-stock/', products_stock_view, name='api-product-stock'),
+    path('api/products-available/', ProductsAvailableView.as_view(), name='api-products-available'),
+    path('api/products-info/', ProductsInfoView.as_view(), name='api-products-info'),
+    path('api/product-stock/', ProductsStockView.as_view(), name='api-product-stock'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

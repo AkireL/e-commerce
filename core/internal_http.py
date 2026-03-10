@@ -1,5 +1,5 @@
 import json
-from typing import Any
+from typing import Any, Optional
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
@@ -12,14 +12,21 @@ def _get_base_url() -> str:
     return 'http://127.0.0.1:8000'
 
 
-def internal_post(url_path: str, data: dict[str, Any]) -> dict[str, Any]:
+def _get_headers(token: Optional[str] = None) -> dict:
+    headers = {
+        'Content-Type': 'application/json',
+    }
+    if token:
+        headers['Authorization'] = f'Bearer {token}'
+    return headers
+
+
+def internal_post(url_path: str, data: dict[str, Any], token: Optional[str] = None) -> dict[str, Any]:
     url = f"{_get_base_url()}{url_path}"
     request = Request(
         url,
         data=json.dumps(data).encode('utf-8'),
-        headers={
-            'Content-Type': 'application/json',
-        },
+        headers=_get_headers(token),
         method='POST',
     )
     
@@ -32,13 +39,11 @@ def internal_post(url_path: str, data: dict[str, Any]) -> dict[str, Any]:
         return {'error': str(e), 'success': False}
 
 
-def internal_get(url_path: str) -> dict[str, Any]:
+def internal_get(url_path: str, token: Optional[str] = None) -> dict[str, Any]:
     url = f"{_get_base_url()}{url_path}"
     request = Request(
         url,
-        headers={
-            'Content-Type': 'application/json',
-        },
+        headers=_get_headers(token),
         method='GET',
     )
     
