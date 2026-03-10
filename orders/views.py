@@ -85,7 +85,15 @@ class CreateOrderProductView(LoginRequiredMixin, FormView):
         kwargs['products'] = get_products_available()
         return kwargs
 
+    def form_invalid(self, form):
+        errors = list(form.errors.values())
+        return JsonResponse({
+                'success': False,
+                'message': errors[0][0] if errors else 'Formulario inválido'
+            }, status=400)
+
     def form_valid(self, form):
+        print("Form validado con datos:", form.cleaned_data)
         order, _ = Order.objects.get_or_create(
             is_active=True,
             user_id=self.request.user.id,
@@ -94,6 +102,15 @@ class CreateOrderProductView(LoginRequiredMixin, FormView):
         quantity = form.cleaned_data["quantity"]
         product_id = int(form.cleaned_data["product"])
         product_data = form.get_product_data(product_id)
+        
+        if not product_data:
+            if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Producto no encontrado'
+                }, status=400)
+            form.add_error('product', 'Producto no disponible')
+            return self.form_invalid(form)
         
         order_product, created = order.items.get_or_create(
             product_id=product_id,
@@ -107,7 +124,12 @@ class CreateOrderProductView(LoginRequiredMixin, FormView):
             order_product.refresh_from_db(fields=["quantity"])
 
         self.object = order_product
-        return HttpResponseRedirect(self.get_success_url())
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'{product_data["name"]} agregado al carrito',
+            'quantity': order_product.quantity
+        })
 
 
 class OrderProcessedView(LoginRequiredMixin, TemplateView):
