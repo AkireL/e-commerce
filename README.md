@@ -32,7 +32,7 @@ Orders ──HTTP/JWT──► Products
 
 | Tecnología | Propósito |
 |------------|-----------|
-| Django 5.2 | Framework web |
+| Django | Framework web |
 | Django REST Framework | API REST |
 | djangorestframework-simplejwt | Autenticación JWT |
 | TailwindCSS | Estilos frontend |
