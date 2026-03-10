@@ -5,11 +5,14 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import DecimalField, ExpressionWrapper, F, Sum
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import JsonResponse
 from django.shortcuts import redirect
-from django.urls import reverse_lazy
 from django.views.decorators.http import require_POST
-from django.views.generic import FormView, DetailView, TemplateView
+from django.views.generic import DetailView, TemplateView
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
 
 from .forms import OrderProductForm
 from .http_client import (
@@ -74,44 +77,34 @@ class MyOrdersView(LoginRequiredMixin, DetailView):
 
         return context
 
+class CreateOrderProductView(APIView):
+    permission_classes = [IsAuthenticated]
 
-class CreateOrderProductView(LoginRequiredMixin, FormView):
-    template_name = "create_order_product.html"
-    form_class = OrderProductForm
-    success_url = reverse_lazy('my-orders')
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['products'] = get_products_available()
-        return kwargs
-
-    def form_invalid(self, form):
-        errors = list(form.errors.values())
-        return JsonResponse({
+    def post(self, request):
+        form = OrderProductForm(request.data, products=get_products_available())
+        
+        if not form.is_valid():
+            errors = list(form.errors.values())
+            return Response({
                 'success': False,
                 'message': errors[0][0] if errors else 'Formulario inválido'
-            }, status=400)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-    def form_valid(self, form):
-        print("Form validado con datos:", form.cleaned_data)
         order, _ = Order.objects.get_or_create(
             is_active=True,
-            user_id=self.request.user.id,
+            user_id=request.user.id,
         )
 
         quantity = form.cleaned_data["quantity"]
         product_id = int(form.cleaned_data["product"])
         product_data = form.get_product_data(product_id)
-        
+
         if not product_data:
-            if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return JsonResponse({
-                    'success': False,
-                    'message': 'Producto no encontrado'
-                }, status=400)
-            form.add_error('product', 'Producto no disponible')
-            return self.form_invalid(form)
-        
+            return Response({
+                'success': False,
+                'message': 'Producto no encontrado'
+            }, status=status.HTTP_404_NOT_FOUND)
+
         order_product, created = order.items.get_or_create(
             product_id=product_id,
             product_name=product_data['name'],
@@ -123,13 +116,11 @@ class CreateOrderProductView(LoginRequiredMixin, FormView):
             order.items.filter(pk=order_product.pk).update(quantity=quantity)
             order_product.refresh_from_db(fields=["quantity"])
 
-        self.object = order_product
-        
-        return JsonResponse({
+        return Response({
             'success': True,
             'message': f'{product_data["name"]} agregado al carrito',
             'quantity': order_product.quantity
-        })
+        }, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
 
 class OrderProcessedView(LoginRequiredMixin, TemplateView):

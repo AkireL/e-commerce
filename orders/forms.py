@@ -18,7 +18,8 @@ class OrderProductForm(forms.Form):
         }),
     )
 
-    def __init__(self, products=None, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
+        products = kwargs.pop('products', None)
         super().__init__(*args, **kwargs)
         if products:
             self.fields['product'].choices = [
