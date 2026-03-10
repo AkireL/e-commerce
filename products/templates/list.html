@@ -54,7 +54,7 @@
                 {% csrf_token %}
                 <input type="hidden" name="product" value="{{ product.id }}">
                 <input type="hidden" name="quantity" value="1" data-quantity-input>
-
+                <input type="hidden" name="product-stock" value="{{ product.id }}" data-stock="{{ product.stock }}">
                 <div class="flex flex-col gap-4 p-5">
                     <div class="flex items-center justify-between gap-3 rounded-full border border-white/10 bg-blue-500 px-2 py-1 text-white">
                         <button type="button" class="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-2xl font-light transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/60" data-quantity-action="decrement" aria-label="Disminuir cantidad">
@@ -112,7 +112,13 @@ document.addEventListener("DOMContentLoaded", () => {
         form.querySelectorAll('[data-quantity-action]').forEach(btn => {
             btn.addEventListener('click', () => {
                 const action = btn.getAttribute('data-quantity-action');
+                const stock = parseInt(form.querySelector('[data-stock]').dataset.stock, 10);
                 let current = parseInt(input.value, 10) ?? 1;
+
+                 if (current >= stock) {
+                    showToast("No puedes agregar más de lo que hay en stock", "error");
+                    return;
+                }
 
                 if (action === 'increment') {
                     current += 1;

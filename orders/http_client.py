@@ -74,7 +74,7 @@ def invalidate_payment_sessions(order_id: int) -> dict:
     if token:
         _service_token_cache['token'] = token
     
-    url = reverse('api-invalidate-sessions')
+    url = reverse('payments:api-invalidate-sessions')
     response = internal_post(url, {'order_id': order_id}, token)
     return response
 
