@@ -33,6 +33,7 @@ ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
     "0.0.0.0",
+    "host.docker.internal"
 ]
 
 
@@ -161,3 +162,5 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+
+INTERNAL_API_BASE_URL=os.getenv('INTERNAL_API_BASE_URL')

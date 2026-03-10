@@ -25,7 +25,8 @@ class OrderMarkPaidView(APIView):
 
     def post(self, request, pk):
         try:
-            order = Order.objects.get(pk=pk, user_id=request.user.id, is_active=True)
+            user_id = request.data.get('user_id')
+            order = Order.objects.get(pk=pk, user_id=user_id, is_active=True)
         except Order.DoesNotExist:
             return Response(
                 {'success': False, 'error': 'Order not found or already paid'},

@@ -96,8 +96,9 @@ class PaymentCheckoutView(LoginRequiredMixin, FormView):
         return context
 
     def form_valid(self, form):
+        user_id = self.request.user.id
         complete_payment_session(self.session_data['token'])
-        mark_order_as_paid(self.session_data['order_id'])
+        mark_order_as_paid(self.session_data['order_id'], user_id)
 
         messages.success(self.request, "Pago completado. ¡Gracias por tu compra!")
         return redirect("order-processed", token=self.session_data['token'])
