@@ -43,7 +43,7 @@ def get_products_available() -> list:
     if token:
         _service_token_cache['token'] = token
 
-    url = reverse('api-products-available')
+    url = reverse('products:api-products-available')
 
     response = internal_get(url, token)
     return response.get('products', [])
@@ -54,7 +54,7 @@ def get_products_info(product_ids: list[int]) -> dict:
     if token:
         _service_token_cache['token'] = token
     
-    url = reverse('api-products-info')
+    url = reverse('products:api-products-info')
     response = internal_post(url, {'product_ids': product_ids}, token)
     return response.get('products', {})
 
@@ -64,7 +64,7 @@ def get_products_stock(product_ids: list[int]) -> dict:
     if token:
         _service_token_cache['token'] = token
     
-    url = reverse('api-product-stock')
+    url = reverse('products:api-product-stock')
     response = internal_post(url, {'product_ids': product_ids}, token)
     return response.get('stocks', {})
 

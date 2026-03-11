@@ -118,7 +118,7 @@ class CreateOrderProductView(APIView):
 
         return Response({
             'success': True,
-            'message': f'{product_data["name"]} agregado al carrito',
+            'message': f'El producto "{product_data["name"]}" se ha agregado al carrito',
             'quantity': order_product.quantity
         }, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
@@ -130,17 +130,17 @@ class OrderProcessedView(LoginRequiredMixin, TemplateView):
         token_raw = kwargs.get("token")
         if token_raw is None:
             messages.error(request, "Token no proporcionado.")
-            return redirect("my-orders")
+            return redirect("orders:my-orders")
         
         try:
             token = uuid.UUID(str(token_raw))
         except (ValueError, AttributeError):
             messages.error(request, "Token inválido.")
-            return redirect("my-orders")
+            return redirect("orders:my-orders")
         
         self.session_data = get_payment_completed_session(str(token), request.user.id)
         if self.session_data is None:
-            return redirect("my-orders")
+            return redirect("orders:my-orders")
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -181,7 +181,7 @@ def _error_response(request, message, status=400):
     if _is_ajax(request):
         return JsonResponse({"success": False, "message": message}, status=status)
     messages.error(request, message)
-    return redirect("my-orders")
+    return redirect("orders:my-orders")
 
 
 @login_required
@@ -233,7 +233,7 @@ def update_order_item(request, pk):
                 }
             )
         messages.warning(request, message)
-        return redirect("my-orders")
+        return redirect("orders:my-orders")
 
     if quantity > stock:
         quantity = stock
@@ -268,7 +268,7 @@ def update_order_item(request, pk):
         messages.info(request, response_message)
     else:
         messages.success(request, "Cantidad actualizada.")
-    return redirect("my-orders")
+    return redirect("orders:my-orders")
 
 
 @login_required
@@ -303,4 +303,4 @@ def remove_order_item(request, pk):
         return JsonResponse(response_data)
 
     messages.success(request, response_data["message"])
-    return redirect("my-orders")
+    return redirect("orders:my-orders")

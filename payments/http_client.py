@@ -42,7 +42,7 @@ def mark_order_as_paid(order_id: int, user_id: int) -> dict:
     if token:
         _service_token_cache['token'] = token
 
-    url = reverse('api-order-mark-paid', args=[order_id])
+    url = reverse('orders:api-order-mark-paid', args=[order_id])
     response = internal_post(url, {'user_id': user_id}, token)
     return response
 
@@ -52,6 +52,6 @@ def get_order_detail(order_id: int) -> dict:
     if token:
         _service_token_cache['token'] = token
     
-    url = reverse('api-order-detail', args=[order_id])
+    url = reverse('orders:api-order-detail', args=[order_id])
     response = internal_get(url, token)
     return response.get('order')

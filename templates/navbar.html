@@ -1,10 +1,10 @@
-<nav class="relative bg-blue-500">
+<nav class="relative bg-sky-600">
   <div class="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
     <div class="relative flex h-12 items-center justify-between">
       <div class="absolute inset-y-0 left-0 flex items-center sm:hidden">
         <!-- Mobile menu button-->
         <button type="button" command="--toggle" commandfor="mobile-menu"
-          class="relative inline-flex items-center justify-center rounded-md p-2 text-gray-800 hover:bg-white/5 hover:text-white focus:outline-2 focus:-outline-offset-1 focus:outline-gray-800">
+          class="relative inline-flex items-center justify-center rounded-md p-2 text-white hover:bg-sky-800 hover:text-white focus:outline-2 focus:-outline-offset-1 focus:outline-sky-800">
           <span class="absolute -inset-0.5"></span>
           <span class="sr-only">Open main menu</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" data-slot="icon"
@@ -19,11 +19,13 @@
       </div>
       <div class="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
         <div class="flex shrink-0 items-center">
-          <a href="{% url 'product_list' %}" class="rounded-full hover:bg-blue-900 text-white mr-4">
-            <svg class="size-6  m-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M3 12l2-3m0 0l7-4 7 4M5 9v10a1 1 0 001 1h12a1 1 0 001-1V9m-9 5h4" />
+          <a href="{% url 'products:product_list' %}" class="rounded-full hover:bg-sky-800 text-white mr-4 p-1">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+              stroke="currentColor" class="size-5">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
             </svg>
+
           </a>
         </div>
 
@@ -32,20 +34,23 @@
 
         <!-- Profile dropdown -->
         {% if user.is_authenticated %}
-        <a href="{% url 'my-orders' %}" class="text-white rounded-full hover:bg-blue-900 mx-5">
-        <svg class="w-5 h-5 rounded-full m-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-        </svg>
-      </a>
+        <a href="{% url 'orders:my-orders' %}" class="text-white rounded-full hover:bg-sky-800 mx-5 p-1">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+            stroke="currentColor" class="size-6">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+          </svg>
 
-        <el-dropdown class="relative ml-3">
+        </a>
+
+        <el-dropdown class="relative ml-1">
           <button
-            class="relative flex rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-800">
+            class="relative flex hover:bg-sky-800 p-1 text-white rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-800">
             <span class="absolute -inset-1.5"></span>
             <span class="sr-only">Open user menu</span>
-            <img src="https://www.gravatar.com/avatar/?d=mp&s=256" alt="Avatar genérico"
-              class="size-8 rounded-full bg-gray-800 outline -outline-offset-1 outline-white/10" />
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+            </svg>
           </button>
 
           <el-menu anchor="bottom end" popover
@@ -70,8 +75,8 @@
       <a href="{% url 'profile' %}" class="text-gray-500 hover:text-gray-800 transition p-1">
         Ir a Perfil
       </a>
-          </el-menu>
-        </el-dropdown>
+      </el-menu>
+      </el-dropdown>
       {% else %}
       <a href="{% url 'login' %}" class="text-gray-500 hover:text-gray-600 transition inline-flex items-center">
         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"
@@ -88,8 +93,8 @@
 
   <el-disclosure id="mobile-menu" hidden class="block sm:hidden">
     <div class="space-y-1 px-2 pt-2 pb-3">
-      <a href="{% url 'product_list' %}" aria-current="page"
-        class="block rounded-md bg-blue-900 px-3 py-2 text-base font-medium text-white">Products</a>
+      <a href="{% url 'products:product_list' %}" aria-current="page"
+        class="block rounded-md bg-sky-600 hover:bg-sky-700 py-2 text-base font-medium text-white">Products</a>
     </div>
   </el-disclosure>
 </nav>

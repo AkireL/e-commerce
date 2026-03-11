@@ -8,6 +8,7 @@ from .views import (
 )
 from .api import OrderDetailView, OrderMarkPaidView
 
+app_name = "orders"
 urlpatterns = [
     path('my-orders', MyOrdersView.as_view(), name='my-orders'),
     path('add-product', CreateOrderProductView.as_view(), name='add_product_order'),

@@ -15,7 +15,7 @@ def delete_product(request, pk):
     product.delete()
     return redirect("product_list")
 
-
+app_name = "products"
 urlpatterns = [
     path('', ListProductsView.as_view(), name="product_list"),
     path('add', CreateProductView.as_view(), name="add_product"),
