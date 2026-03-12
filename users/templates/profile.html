@@ -7,7 +7,7 @@
             <h1 class="text-2xl font-semibold text-gray-900">Bienvenido a tu perfil, <span class="text-blue-600">{{ user.first_name }} {{ user.last_name }}</span></h1>
             <p class="mt-1 text-sm text-gray-500">Gestiona tu información, revisa tus órdenes y ajustes de cuenta.</p>
             <div class="mt-4 flex items-center gap-3">
-                <a href="{% url 'my-orders' %}" class="inline-flex items-center px-4 py-2 border border-gray-200 text-sm rounded-md text-gray-700 hover:bg-gray-50">Ver órdenes</a>
+                <a href="{% url 'orders:my-orders' %}" class="inline-flex items-center px-4 py-2 border border-gray-200 text-sm rounded-md text-gray-700 hover:bg-gray-50">Ver órdenes</a>
             </div>
         </div>
     </div>
