@@ -4,21 +4,22 @@ from django.conf import settings
 from django.shortcuts import get_object_or_404, redirect
 from django.views.decorators.http import require_POST
 
-from .models import Product
-from .views import ListProductsView, CreateProductView, UpdateProductView
 from .api import ProductsAvailableView, ProductsInfoView, ProductsStockView
+from .models import Product
+from .views import ListProductsView, CreateProductView, UpdateProductView, DetailProductView
 
 
 @require_POST
 def delete_product(request, pk):
     product = get_object_or_404(Product, pk=pk)
     product.delete()
-    return redirect("product_list")
+    return redirect("products:product_list")
 
 app_name = "products"
 urlpatterns = [
     path('', ListProductsView.as_view(), name="product_list"),
     path('add', CreateProductView.as_view(), name="add_product"),
+    path('<int:pk>', DetailProductView.as_view(), name="detail_product"),
     path('edit/<int:pk>', UpdateProductView.as_view(), name="edit_product"),
     path('delete/<int:pk>', delete_product, name="delete_product"),
     path('api/products-available/', ProductsAvailableView.as_view(), name='api-products-available'),
