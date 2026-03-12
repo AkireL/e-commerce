@@ -1,27 +1,28 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import render
 from django.urls import reverse_lazy
-from django.views.generic import TemplateView, FormView, DetailView
+from django.shortcuts import get_object_or_404, redirect
+from django.views.generic import ListView, FormView, DetailView, View
 from django.views.generic.edit import UpdateView
 from .models import Product
 from .forms import ProductForm
 
-class ListProductsView(LoginRequiredMixin, TemplateView):
-    def get(self, request):
-        can = request.user.is_admin_or_editor()
+class ListProductsView(LoginRequiredMixin, ListView):
+    model = Product
+    template_name = 'list.html'
+    context_object_name = 'products'
 
-        products = Product.objects.all()
-        return render(request, 'list.html', {
-            'products': products,
-            'can': {
-                'products': {
-                        'edit': can,
-                        'create': can,
-                        'delete': can,
-                    }
-                }
-            })
-    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        can = self.request.user.is_admin_or_editor()
+        context['can'] = {
+            'products': {
+                'edit':   can,
+                'create': can,
+                'delete': can,
+            }
+        }
+        return context
+
 class DetailProductView(LoginRequiredMixin, DetailView):
     template_name = "detail.html"
     model=Product
@@ -53,3 +54,12 @@ class UpdateProductView(LoginRequiredMixin, UpdateView):
     form_class = ProductForm
     success_url = reverse_lazy('products:product_list')
     template_name = 'create.html'
+
+class DeleteProductView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        if not request.user.is_admin_or_editor():
+            return redirect("products:list_products")
+        
+        product = get_object_or_404(Product, pk=pk)
+        product.delete()
+        return redirect("products:products_list")

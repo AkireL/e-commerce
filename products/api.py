@@ -10,7 +10,6 @@ from products.serializers import (
     ProductStockSerializer,
 )
 
-
 class ProductsAvailableView(APIView):
     permission_classes = [IsAuthenticated]
 
