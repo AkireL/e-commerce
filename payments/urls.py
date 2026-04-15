@@ -1,8 +1,9 @@
 from django.urls import path
 
-from .views import PaymentCheckoutView, create_session_view
-from .api import PaymentSessionDetailView, InvalidateSessionsView
-
+from payments.views.checkout_payment_view import PaymentCheckoutView
+from payments.views.create_session_view import create_session_view
+from payments.views.api.show_payment_session_view import PaymentSessionDetailView
+from payments.views.api.invalidate_sessions_view import InvalidateSessionsView
 
 app_name = "payments"
 
