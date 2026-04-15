@@ -2,15 +2,14 @@ from django.urls import path
 from django.conf.urls.static import static
 from django.conf import settings
 
-from .api import ProductsAvailableView, ProductsInfoView, ProductsStockView
-from .views import (
-    ListProductsView,
-    CreateProductView,
-    UpdateProductView,
-    DetailProductView,
-    DeleteProductView,
-)
-
+from products.views.api.available_product_view import ProductsAvailableView 
+from products.views.api.detail_product_view import ProductsInfoView
+from products.views.api.stock_product_view import ProductsStockView
+from products.views.create_product_view import CreateProductView
+from products.views.delete_product_view import DeleteProductView
+from products.views.list_products_view import ListProductsView
+from products.views.show_product_view import DetailProductView
+from products.views.update_product_view import UpdateProductView
 
 app_name = "products"
 urlpatterns = [
