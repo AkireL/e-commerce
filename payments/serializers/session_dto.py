@@ -16,7 +16,7 @@ class SessionDTO:
         status,
         amount_total,
         items,
-        get_checkout_url
+        get_checkout_url,
     ):
         self.id = id
         self.token = token
@@ -31,7 +31,9 @@ class SessionDTO:
         self.get_checkout_url = get_checkout_url
 
     @staticmethod
-    def from_model(session: PaymentSession, items: list[PaymentItem] | None = None) -> "SessionDTO":
+    def from_model(
+        session: PaymentSession, items: list[PaymentItem] | None = None
+    ) -> "SessionDTO":
         if items is None:
             items = list(session.items.all())
 
@@ -48,6 +50,8 @@ class SessionDTO:
             status=session.status,
             amount_total=session.amount_total,
             items=[item_dto(item) for item in items],
-            get_checkout_url= f"/payments/checkout/{session.token}/",
-    
+            get_checkout_url=f"/payments/checkout/{session.token}/",
         )
+
+    def __str__(self) -> str:
+        return f"SessionDTO(id={self.id}, token={self.token}, order_number={self.order_number}, status={self.status}, amount_total={self.amount_total}, items={len(self.items)})"
