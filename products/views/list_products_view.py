@@ -1,6 +1,7 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView
 from products.models import Product
+from logger.logger import logger
 
 class ListProductsView(LoginRequiredMixin, ListView):
     model = Product
@@ -17,5 +18,6 @@ class ListProductsView(LoginRequiredMixin, ListView):
                 'delete': can,
             }
         }
+        logger.warning(f"ListProductsView - User {self.request.user.username} accessed the product list view.")
         return context
   

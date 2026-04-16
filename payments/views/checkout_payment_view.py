@@ -6,6 +6,8 @@ from django.shortcuts import redirect
 from django.views.generic import FormView
 
 from payments.forms import PaymentForm
+from logger.logger import logger
+
 
 class PaymentCheckoutView(LoginRequiredMixin, FormView):
     template_name = "payments/checkout.html"
@@ -30,6 +32,8 @@ class PaymentCheckoutView(LoginRequiredMixin, FormView):
         
         session, was_completed = self.payment_service.get_active_session(str(token), request.user)
 
+        logger.warning(f"checkout_payment_view - User {request.user.id} is trying to access payment session with token {token}.")
+        logger.warning(f"checkout_payment_view - Session data: {session}, was_completed: {was_completed}")
         if session is None:
             messages.error(request, "Sesión no encontrada.")
             return redirect("orders:my-orders")
@@ -52,6 +56,7 @@ class PaymentCheckoutView(LoginRequiredMixin, FormView):
 
     def form_valid(self, form):
         user_id = self.request.user.id
+        logger.warning(f"checkout_payment_view - form_valid: Processing payment for user_id: {user_id}, session_token: {self.session_data.token}")
         self.payment_service.checkout_session(self.session_data, user_id)
         
         messages.success(self.request, "Pago completado. ¡Gracias por tu compra!")

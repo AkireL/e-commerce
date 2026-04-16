@@ -1,3 +1,4 @@
+import json
 import uuid
 from typing import Optional
 
@@ -7,7 +8,7 @@ from django.db import transaction
 from payments.exceptions import EmptyOrderError
 from payments.models import PaymentSession, PaymentSessionStatus
 from payments.serializers.session_dto import SessionDTO
-
+from logger.logger import logger
 
 class PaymentSessionRepository:
     def __init__(self, payment_item_repository):
@@ -101,6 +102,10 @@ class PaymentSessionRepository:
             session.status = PaymentSessionStatus.COMPLETED
             session.completed_at = timezone.now()
             session.save(update_fields=["status", "completed_at", "updated_at"])
+            
+            logger.warning(f"PaymentSessionRepository - complete_payment_session: Completed payment session {json.dumps({'token': str(token), 'session_id': session.id})}")
+            
             return SessionDTO.from_model(session)
-        except PaymentSession.DoesNotExist:
+        except Exception as e:
+            logger.error(f"PaymentSessionRepository - complete_payment_session: Error occurred while completing payment session: {e}")
             return None
