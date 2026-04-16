@@ -35,9 +35,9 @@ def internal_post(url_path: str, data: dict[str, Any], token: Optional[str] = No
         with urlopen(request, timeout=5) as response:
             return json.loads(response.read().decode('utf-8'))
     except URLError as e:
-        return {'error': str(e), 'success': False}
+        return {'code': 500, 'status_code': 500, 'error': str(e), 'success': False}
     except Exception as e:
-        return {'error': str(e), 'success': False}
+        return {'code': None, 'status_code': None, 'error': str(e), 'success': False}
 
 
 def internal_get(url_path: str, token: Optional[str] = None) -> dict[str, Any]:
