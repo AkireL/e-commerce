@@ -1,29 +1,30 @@
 from decimal import Decimal
+
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import DetailView
-from orders.models import Order
-from orders.http_client import (
-    get_products_info,
-)
+
+from orders.http_client import get_products_info
+from orders.repositories import OrderRepository, OrderItemRepository
+
+order_repository = OrderRepository()
+order_item_repository = OrderItemRepository()
+
 
 class MyOrdersView(LoginRequiredMixin, DetailView):
-    model = Order
+    model = None
     template_name = 'my_orders.html'
     context_object_name = "order"
 
     def get_object(self):
-        return Order.objects.filter(
-            is_active=True, 
-            user_id=self.request.user.id
-        ).first()
+        return order_repository.get_active_order(self.request.user.id)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         order = context.get("order")
 
         if order:
-            items = list(order.items.all())
-            total = sum((item.line_total for item in items), Decimal("0.00"))
+            items = order_item_repository.get_items_for_order(order)
+            total = order_item_repository.calculate_total(order)
             
             product_ids = [item.product_id for item in items]
             products = get_products_info(product_ids)
@@ -31,6 +32,7 @@ class MyOrdersView(LoginRequiredMixin, DetailView):
             enriched_items = []
             for item in items:
                 product_data = products.get(str(item.product_id)) or {}
+
                 item_dict = {
                     "pk": item.id,
                     "id": item.id,

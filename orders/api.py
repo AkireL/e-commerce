@@ -3,17 +3,21 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-from orders.models import Order
 from orders.serializers import OrderSerializer
+from orders.repositories import OrderRepository
 from logger.logger import logger
+
+
+order_repository = OrderRepository()
+
 
 class OrderDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, pk):
-        try:
-            order = Order.objects.prefetch_related('items').get(pk=pk, user_id=request.user.id)
-        except Order.DoesNotExist:
+        order = order_repository.get_order_with_items(pk)
+        
+        if order is None or order.user_id != request.user.id:
             logger.warning(f"orders:api OrderDetailView - Order with id {pk} not found for user {request.user.id}.")
             return Response({'error': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -26,18 +30,17 @@ class OrderMarkPaidView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, pk):
-        try:
-            user_id = request.data.get('user_id')
-            order = Order.objects.get(pk=pk, user_id=user_id, is_active=True)
-        except Order.DoesNotExist:
-            logger.warning(f"orders:api OrderMarkPaidView -Order with id {pk} not found or already marked as paid for user {user_id}.")
+        user_id = request.data.get('user_id')
+        order = order_repository.get_order_by_id(pk)
+        
+        if order is None or order.user_id != user_id or not order.is_active:
+            logger.warning(f"orders:api OrderMarkPaidView - Order with id {pk} not found or already marked as paid for user {user_id}.")
             return Response(
                 {'success': False, 'error': 'Order not found or already paid'},
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        order.is_active = False
-        order.save(update_fields=['is_active'])
+        order_repository.mark_as_paid(pk)
         
         logger.warning(f"orders:api OrderMarkPaidView - Order with id {pk} marked as paid for user {user_id}.")
         return Response({'success': True})
