@@ -6,9 +6,7 @@ from django.http import HttpResponseNotAllowed
 from django.shortcuts import redirect
 
 from payments.exceptions import EmptyOrderError
-from payments.services import (
-    create_payment_session
-)
+from payments.services.payment_service import PaymentService
 
 @login_required
 def create_session_view(request):
@@ -38,11 +36,12 @@ def create_session_view(request):
     }
 
     try:
-        session_data = create_payment_session(order_data, request.user.id, request.user.username, request.user.email)
+        session_data = PaymentService().create_payment_session(request.user, order_data)
+        messages.info(request, "Redirigiéndote a la pasarela de pago simulada.")
+        
+        return redirect("payments:checkout", token=session_data.token)
     except EmptyOrderError as exc:
         messages.error(request, str(exc))
         return redirect("orders:my-orders")
 
-    messages.info(request, "Redirigiéndote a la pasarela de pago simulada.")
-    return redirect("payments:checkout", token=session_data['token'])
 

@@ -6,15 +6,12 @@ from django.shortcuts import redirect
 from django.views.generic import FormView
 
 from payments.forms import PaymentForm
-from payments.http_client import mark_order_as_paid
-from payments.services import (
-    complete_payment_session,
-    get_pending_session_for_checkout,
-)
+from payments.services.payment_service import PaymentService
 
 class PaymentCheckoutView(LoginRequiredMixin, FormView):
     template_name = "payments/checkout.html"
     form_class = PaymentForm
+    payment_service = PaymentService()
 
     def dispatch(self, request, *args, **kwargs):
         token_raw = kwargs.get("token")
@@ -28,18 +25,17 @@ class PaymentCheckoutView(LoginRequiredMixin, FormView):
             messages.error(request, "Token inválido.")
             return redirect("orders:my-orders")
         
-        self.session_data = get_pending_session_for_checkout(
-            token, request.user.id, request.user.username, request.user.email
-        )
+        session, was_completed = self.payment_service.get_active_session(str(token), request.user)
 
-        if self.session_data is None:
-            messages.error(request, "Sesión de pago no encontrada.")
-            return redirect("my-orders")
-
-        if self.session_data.get('status') == "completed":
+        if session is None:
+            messages.error(request, "Sesión no encontrada.")
+            return redirect("orders:my-orders")
+        
+        if was_completed:
             messages.info(request, "Esta sesión ya fue procesada.")
-            return redirect("orders:order-processed", token=self.session_data.get('token'))
-
+            return redirect("orders:order-processed", token=token)
+        
+        self.session_data = session
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -47,15 +43,13 @@ class PaymentCheckoutView(LoginRequiredMixin, FormView):
         context.update(
             {
                 "session": self.session_data,
-                "items": self.session_data.get('items', []),
             }
         )
         return context
 
     def form_valid(self, form):
         user_id = self.request.user.id
-        complete_payment_session(self.session_data['token'])
-        mark_order_as_paid(self.session_data['order_id'], user_id)
-
+        PaymentService().checkout_session(self.session_data, user_id)
+        
         messages.success(self.request, "Pago completado. ¡Gracias por tu compra!")
-        return redirect("orders:order-processed", token=self.session_data['token'])
+        return redirect("orders:order-processed", token=self.session_data.token)

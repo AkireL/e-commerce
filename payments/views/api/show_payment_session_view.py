@@ -2,23 +2,17 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-from payments.models import PaymentSession, PaymentSessionStatus
-from payments.serializers import PaymentSessionSerializer
-
+from payments.services.payment_service import PaymentService
 
 class PaymentSessionDetailView(APIView):
     permission_classes = [IsAuthenticated]
-
+    payment_service = PaymentService()
+    
     def get(self, request, token):
         try:
-            session = PaymentSession.objects.prefetch_related('items').get(
-                token=token,
-                user_id=request.user.id,
-                status=PaymentSessionStatus.COMPLETED,
-            )
-        except PaymentSession.DoesNotExist:
+            session = self.payment_service.get_completed_session(token, request.user.id)        
+            return Response({'session': session})
+        except Exception:
             return Response({'session': None})
 
-        serializer = PaymentSessionSerializer(session)
-        return Response({'session': serializer.data})
 
