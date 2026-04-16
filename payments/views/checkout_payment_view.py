@@ -6,12 +6,15 @@ from django.shortcuts import redirect
 from django.views.generic import FormView
 
 from payments.forms import PaymentForm
-from payments.services.payment_service import PaymentService
 
 class PaymentCheckoutView(LoginRequiredMixin, FormView):
     template_name = "payments/checkout.html"
     form_class = PaymentForm
-    payment_service = PaymentService()
+    payment_service = None
+
+    def __init__(self, payment_service=None, **kwargs):
+        super().__init__(**kwargs)
+        self.payment_service = payment_service
 
     def dispatch(self, request, *args, **kwargs):
         token_raw = kwargs.get("token")
@@ -49,7 +52,7 @@ class PaymentCheckoutView(LoginRequiredMixin, FormView):
 
     def form_valid(self, form):
         user_id = self.request.user.id
-        PaymentService().checkout_session(self.session_data, user_id)
+        self.payment_service.checkout_session(self.session_data, user_id)
         
         messages.success(self.request, "Pago completado. ¡Gracias por tu compra!")
         return redirect("orders:order-processed", token=self.session_data.token)
