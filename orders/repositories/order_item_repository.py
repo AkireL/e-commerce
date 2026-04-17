@@ -7,6 +7,7 @@ from orders.models import Order, OrderProduct
 
 
 class OrderItemRepository:
+    
     def get_item(self, item_id: int, user_id: int, is_active: bool = True) -> Optional[OrderProduct]:
         try:
             return OrderProduct.objects.get(

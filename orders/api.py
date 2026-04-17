@@ -14,6 +14,7 @@ order_repository = OrderRepository()
 class OrderDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
+
     def get(self, request, pk):
         order = order_repository.get_order_with_items(pk)
         
@@ -28,19 +29,16 @@ class OrderDetailView(APIView):
 
 class OrderMarkPaidView(APIView):
     permission_classes = [IsAuthenticated]
+    paid_order_service = None
+
+    def __init__(self, paid_order_service, **kwargs):
+        super().__init__(**kwargs)
+        self.paid_order_service = paid_order_service
 
     def post(self, request, pk):
-        user_id = request.data.get('user_id')
-        order = order_repository.get_order_by_id(pk)
+        is_paid = self.paid_order_service.get_order_by_id(pk)
         
-        if order is None or order.user_id != user_id or not order.is_active:
-            logger.warning(f"orders:api OrderMarkPaidView - Order with id {pk} not found or already marked as paid for user {user_id}.")
-            return Response(
-                {'success': False, 'error': 'Order not found or already paid'},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        order_repository.mark_as_paid(pk)
+        if not is_paid:
+            return Response({'error': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)
         
-        logger.warning(f"orders:api OrderMarkPaidView - Order with id {pk} marked as paid for user {user_id}.")
         return Response({'success': True})

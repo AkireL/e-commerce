@@ -48,7 +48,7 @@
 
                 <tbody class="divide-y divide-gray-100" data-cart-body>
                     {% for item in order_items %}
-                    <tr class="hover:bg-gray-50 transition" data-item-row data-item-id="{{ item.pk }}">
+                    <tr class="hover:bg-gray-50 transition" data-item-row data-item-id="{{ item.id }}">
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-4">
                                 {% if item.product.photo_url %}
@@ -77,7 +77,7 @@
                                 <div
                                     class="inline-flex items-center gap-2 rounded-full border border-gray-200 px-3 py-1 bg-gray-50"
                                     data-quantity-control
-                                    data-update-url="{% url 'orders:cart-update-item' item.pk %}"
+                                    data-update-url="{% url 'orders:cart-update-item' item.id %}"
                                     data-min="1"
                                     data-max="{{ item.product.stock|default:0 }}"
                                     data-current="{{ item.quantity }}"
@@ -106,7 +106,7 @@
                                 </div>
                                 <input type="hidden" value="{{ item.quantity }}" data-quantity-input>
                                 <noscript>
-                                    <form method="post" action="{% url 'orders:cart-update-item' item.pk %}" class="flex items-center gap-2">
+                                    <form method="post" action="{% url 'orders:cart-update-item' item.id %}" class="flex items-center gap-2">
                                         {% csrf_token %}
                                         <input type="number" name="quantity" value="{{ item.quantity }}" min="1" max="{{ item.product.stock|default:0 }}" class="w-20 border rounded px-2 py-1">
                                         <button type="submit" class="px-3 py-1 rounded bg-blue-600 text-white text-xs">Actualizar</button>
@@ -128,13 +128,13 @@
                                 type="button"
                                 class="inline-flex items-center px-4 py-2 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition text-xs font-medium"
                                 data-remove-button
-                                data-remove-url="{% url 'orders:cart-remove-item' item.pk %}"
+                                data-remove-url="{% url 'orders:cart-remove-item' item.id %}"
                                 data-confirm-message="¿Eliminar {{ item.product_name }} del carrito?"
                             >
                                 Eliminar
                             </button>
                             <noscript>
-                                <form method="post" action="{% url 'orders:cart-remove-item' item.pk %}" class="inline">
+                                <form method="post" action="{% url 'orders:cart-remove-item' item.id %}" class="inline">
                                     {% csrf_token %}
                                     <button type="submit" class="px-3 py-1 rounded bg-red-600 text-white text-xs">Eliminar</button>
                                 </form>
