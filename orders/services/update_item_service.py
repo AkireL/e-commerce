@@ -1,15 +1,13 @@
 from decimal import Decimal
 
-from orders.http_client import (
-    get_products_stock,
-    invalidate_payment_sessions,
-)
 
 class UpdateItemService:
     order_item_repository = None
 
-    def __init__(self, order_item_repository):
+    def __init__(self, order_item_repository, products_client, payments_client):
         self.order_item_repository = order_item_repository
+        self.products_client = products_client
+        self.payments_client = payments_client
     
     def execute(self, user, item_id: int, quantity: int):
         item = self.order_item_repository.get_item(item_id, user.id)
@@ -21,7 +19,7 @@ class UpdateItemService:
             }
 
         order = item.order
-        stocks = get_products_stock([item.product_id])
+        stocks = self.products_client.get_products_stock([item.product_id])
         stock = stocks.get(str(item.product_id), 0)
 
         if not stock:
@@ -35,7 +33,7 @@ class UpdateItemService:
 
         if stock <= 0:
             self.order_item_repository.remove_item(item)
-            invalidate_payment_sessions(order.id)
+            self.payments_client.invalidate_payment_sessions(order.id)
 
             order_total = self.order_item_repository.calculate_total(order)
 
@@ -54,7 +52,7 @@ class UpdateItemService:
 
         self.order_item_repository.update_quantity(item, quantity)
 
-        invalidate_payment_sessions(order.id)
+        self.payments_client.invalidate_payment_sessions(order.id)
 
         item_total = item.product_price * item.quantity
         order_total = self.order_item_repository.calculate_total(order)

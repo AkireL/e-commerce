@@ -4,19 +4,21 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 
 from orders.forms import OrderProductForm
-from orders.http_client import get_products_available
 
 
 class CreateOrderProductView(APIView):
     permission_classes = [IsAuthenticated]
     add_product_service = None
+    products_client = None
 
-    def __init__(self, add_product_service, **kwargs):
+    def __init__(self, add_product_service=None, products_client=None, **kwargs):
         super().__init__(**kwargs)
         self.add_product_service = add_product_service
+        self.products_client = products_client
 
     def post(self, request):
-        form = OrderProductForm(request.data, products=get_products_available())
+        products = self.products_client.get_products_available()
+        form = OrderProductForm(request.data, products=products)
 
         if not form.is_valid():
             errors = list(form.errors.values())

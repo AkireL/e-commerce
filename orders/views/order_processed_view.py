@@ -5,12 +5,14 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect
 from django.views.generic import TemplateView
 
-from orders.http_client import (
-    get_payment_completed_session,
-)
 
 class OrderProcessedView(LoginRequiredMixin, TemplateView):
     template_name = "order_processed.html"
+    payments_client = None
+
+    def __init__(self, payments_client=None, **kwargs):
+        super().__init__(**kwargs)
+        self.payments_client = payments_client
 
     def dispatch(self, request, *args, **kwargs):
         token_raw = kwargs.get("token")
@@ -25,7 +27,7 @@ class OrderProcessedView(LoginRequiredMixin, TemplateView):
             messages.error(request, "Token inválido.")
             return redirect("orders:my-orders")
         
-        self.session_data = get_payment_completed_session(str(token), request.user.id)
+        self.session_data = self.payments_client.get_payment_completed_session(str(token), request.user.id)
         
         if self.session_data is None:
             return redirect("orders:my-orders")

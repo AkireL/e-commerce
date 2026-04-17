@@ -1,5 +1,6 @@
 from django.urls import path
 
+from orders.clients import ProductsClient, PaymentsClient
 from orders.views.update_order_item_view import UpdateOrderItemView
 from orders.views.remove_order_item_view import RemoveOrderItemView
 from orders.views.order_processed_view import OrderProcessedView
@@ -16,6 +17,9 @@ from orders.services.paid_order_service import PaidOrderService
 
 app_name = "orders"
 
+products_client = ProductsClient()
+payments_client = PaymentsClient()
+
 urlpatterns = [
     path(
         "my-orders",
@@ -23,6 +27,7 @@ urlpatterns = [
             show_order_service=ShowOrderService(
                 order_repository=OrderRepository(),
                 order_item_repository=OrderItemRepository(),
+                products_client=products_client,
             )
         ),
         name="my-orders",
@@ -33,18 +38,23 @@ urlpatterns = [
             add_product_service=AddProductService(
                 order_repository=OrderRepository(),
                 order_item_repository=OrderItemRepository(),
-            )
+            ),
+            products_client=products_client,
         ),
         name="add_product_order",
     ),
     path(
-        "processed/<uuid:token>/", OrderProcessedView.as_view(), name="order-processed"
+        "processed/<uuid:token>/", 
+        OrderProcessedView.as_view(payments_client=payments_client), 
+        name="order-processed"
     ),
     path(
         "cart/update-item/<int:pk>/",
         UpdateOrderItemView.as_view(
             update_item_service=UpdateItemService(
-                order_item_repository=OrderItemRepository()
+                order_item_repository=OrderItemRepository(),
+                products_client=products_client,
+                payments_client=payments_client,
             )
         ),
         name="cart-update-item",
@@ -53,7 +63,8 @@ urlpatterns = [
         "cart/remove-item/<int:pk>/",
         RemoveOrderItemView.as_view(
             remove_item_service=RemoveItemService(
-                order_item_repository=OrderItemRepository()
+                order_item_repository=OrderItemRepository(),
+                payments_client=payments_client,
             )
         ),
         name="cart-remove-item",

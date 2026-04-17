@@ -1,11 +1,12 @@
 from orders.models import Order
-from orders.http_client import get_products_info
+
 
 class ShowOrderService:
     
-    def __init__(self, order_repository, order_item_repository):
+    def __init__(self, order_repository, order_item_repository, products_client):
         self.order_repository = order_repository
         self.order_item_repository = order_item_repository
+        self.products_client = products_client
     
     def get_order(self, user_id):
         return self.order_repository.get_active_order(user_id)
@@ -17,7 +18,7 @@ class ShowOrderService:
         order_items = self.order_item_repository.get_items_for_order(order)
         
         product_ids = [item.product_id for item in order_items]
-        products = get_products_info(product_ids)
+        products = self.products_client.get_products_info(product_ids)
         
         items = []
         for item in order_items:
@@ -41,4 +42,3 @@ class ShowOrderService:
             "order_items": items,
             "oredr_total": self._calculate_total(order),
         }
-    
