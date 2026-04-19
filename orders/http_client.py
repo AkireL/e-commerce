@@ -84,5 +84,5 @@ def get_payment_completed_session(token: str, user_id: int) -> dict | None:
     if service_token:
         _service_token_cache['token'] = service_token
 
-    response = internal_get(f'/payments/api/sessions/{token}/?user_id={user_id}', service_token)
+    response = internal_get(f'/payments/sessions/{token}/', service_token)
     return response.get('session')
