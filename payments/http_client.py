@@ -37,13 +37,13 @@ def _get_service_token() -> Optional[str]:
 _service_token_cache = {'token': None}
 
 
-def mark_order_as_paid(order_id: int, user_id: int) -> dict:
+def mark_order_as_paid(order_id: int) -> dict:
     token = _service_token_cache.get('token') or _get_service_token()
     if token:
         _service_token_cache['token'] = token
 
     url = reverse('orders:api-order-mark-paid', args=[order_id])
-    response = internal_post(url, {'user_id': user_id}, token)
+    response = internal_post(url, {}, token)
     return response
 
 

@@ -5,6 +5,12 @@ from orders.models import Order, OrderProduct
 
 
 class OrderRepository:
+    def get_order_with_items(self, order_id: int) -> Optional[Order]:
+        try:
+            return Order.objects.prefetch_related("items").get(pk=order_id)
+        except Order.DoesNotExist:
+            return None
+
     def get_active_order(self, user_id: int) -> Optional[OrderEntity]:
         order = Order.objects.filter(
             is_active=True, user_id=user_id

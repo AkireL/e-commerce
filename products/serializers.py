@@ -25,11 +25,14 @@ class ProductInfoSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'price', 'stock', 'available', 'photo_url']
 
     def get_photo_url(self, obj):
-        if obj.photo:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.photo.url)
-        return None
+        if not obj.photo:
+            return None
+    
+        request = self.context.get('request')
+    
+        if not request:
+            return None
+        return request.build_absolute_uri(obj.photo.url)
 
 
 class ProductStockSerializer(serializers.ModelSerializer):

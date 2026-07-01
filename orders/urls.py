@@ -7,6 +7,7 @@ from orders.use_cases.add_product import AddProductUseCase
 from orders.use_cases.show_order import ShowOrderUseCase
 from orders.use_cases.update_item import UpdateItemUseCase
 from orders.use_cases.remove_item import RemoveItemUseCase
+from orders.use_cases.order_detail import OrderDetailUseCase
 from orders.use_cases.paid_order import PaidOrderUseCase
 from orders.use_cases.show_processed_order import ShowProcessedOrderUseCase
 from orders.views.create_order_product_view import CreateOrderProductView
@@ -71,7 +72,9 @@ urlpatterns = [
     ),
     path(
         "<int:pk>/",
-        OrderDetailView.as_view(order_repo=OrderRepository()),
+        OrderDetailView.as_view(
+            use_case=OrderDetailUseCase(order_repo=OrderRepository())
+        ),
         name="api-order-detail",
     ),
     path(

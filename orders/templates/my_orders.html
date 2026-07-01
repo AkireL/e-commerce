@@ -51,9 +51,9 @@
                     <tr class="hover:bg-gray-50 transition" data-item-row data-item-id="{{ item.id }}">
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-4">
-                                {% if item.product.photo_url %}
+                                {% if item.photo_url %}
                                     <img
-                                        src="{{ item.product.photo_url }}"
+                                        src="{{ item.photo_url }}"
                                         alt="{{ item.product_name }}"
                                         class="w-12 h-12 rounded-lg object-cover"
                                     >
@@ -67,7 +67,7 @@
                                     <span class="font-medium text-gray-800 block">
                                         {{ item.product_name }}
                                     </span>
-                                    <span class="text-xs text-gray-500">Disponible: {{ item.product.stock|default:"N/A" }}</span>
+                                    <span class="text-xs text-gray-500">Disponible: {{ item.stock|default:"N/A" }}</span>
                                 </div>
                             </div>
                         </td>
@@ -79,7 +79,7 @@
                                     data-quantity-control
                                     data-update-url="{% url 'orders:cart-update-item' item.id %}"
                                     data-min="1"
-                                    data-max="{{ item.product.stock|default:0 }}"
+                                    data-max="{{ item.stock|default:0 }}"
                                     data-current="{{ item.quantity }}"
                                 >
                                     <button
@@ -99,7 +99,7 @@
                                         class="w-7 h-7 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         data-qty-plus
                                         aria-label="Incrementar cantidad"
-                                        {% if item.quantity >= item.product.stock|default:0 %}disabled{% endif %}
+                                        {% if item.quantity >= item.stock|default:0 %}disabled{% endif %}
                                     >
                                         +
                                     </button>
@@ -108,7 +108,7 @@
                                 <noscript>
                                     <form method="post" action="{% url 'orders:cart-update-item' item.id %}" class="flex items-center gap-2">
                                         {% csrf_token %}
-                                        <input type="number" name="quantity" value="{{ item.quantity }}" min="1" max="{{ item.product.stock|default:0 }}" class="w-20 border rounded px-2 py-1">
+                                        <input type="number" name="quantity" value="{{ item.quantity }}" min="1" max="{{ item.stock|default:0 }}" class="w-20 border rounded px-2 py-1">
                                         <button type="submit" class="px-3 py-1 rounded bg-blue-600 text-white text-xs">Actualizar</button>
                                     </form>
                                 </noscript>
