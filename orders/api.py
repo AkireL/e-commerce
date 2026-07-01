@@ -36,7 +36,7 @@ class OrderMarkPaidView(APIView):
         self.paid_order_service = paid_order_service
 
     def post(self, request, pk):
-        is_paid = self.paid_order_service.get_order_by_id(pk)
+        is_paid = self.paid_order_service.mark_as_paid(pk)
         
         if not is_paid:
             return Response({'error': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)

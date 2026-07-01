@@ -12,12 +12,6 @@ class AddProductService:
             user.username,
             user.email,
         )
-        
-        order = self.order_repository.create_or_get_active(
-            user.id,
-            user.username,
-            user.email,
-        )
 
         item, created = self.order_item_repository.add_or_update_item(
             order,
