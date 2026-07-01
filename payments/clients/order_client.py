@@ -89,11 +89,10 @@ class OrderClient:
     # API pública
     # ------------------------------------------------------------------
 
-    def mark_order_as_paid(self, order_id: int, user_id: int) -> dict:
-        logger.warning(f"order-client mark-order-as-paid")
+    def mark_order_as_paid(self, order_id: int, owner_id: int) -> dict:
         url = reverse('orders:api-order-mark-paid', args=[order_id])
 
-        return self._post(url, {'user_id': user_id})
+        return self._post(url, {'owner_id': owner_id})
 
     def get_order_detail(self, order_id: int) -> dict:
         logger.warning(f"order-client - get-order-detail")

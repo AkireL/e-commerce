@@ -1,16 +1,19 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import JsonResponse
 from django.views.generic import View
-from rest_framework.response import Response
+
+from orders.use_cases.remove_item import RemoveItemInput
 
 
 class RemoveOrderItemView(LoginRequiredMixin, View):
-    remove_item_service = None
-
-    def __init__(self, remove_item_service, **kwargs):
+    def __init__(self, use_case=None, **kwargs):
         super().__init__(**kwargs)
-        self.remove_item_service = remove_item_service
-        
-    def post(self, request, pk):
-        response = self.remove_item_service.execute(request.user, pk)
+        self.use_case = use_case
 
-        return Response(response)
+    def post(self, request, pk):
+        input = RemoveItemInput(
+            user_id=request.user.id,
+            item_id=pk,
+        )
+        result = self.use_case.execute(input)
+        return JsonResponse(result.__dict__)
