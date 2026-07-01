@@ -6,6 +6,8 @@ from orders.use_cases.update_item import UpdateItemInput
 
 
 class UpdateOrderItemView(LoginRequiredMixin, View):
+    use_case = None
+
     def __init__(self, use_case=None, **kwargs):
         super().__init__(**kwargs)
         self.use_case = use_case

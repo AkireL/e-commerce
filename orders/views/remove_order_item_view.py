@@ -6,6 +6,8 @@ from orders.use_cases.remove_item import RemoveItemInput
 
 
 class RemoveOrderItemView(LoginRequiredMixin, View):
+    use_case = None
+
     def __init__(self, use_case=None, **kwargs):
         super().__init__(**kwargs)
         self.use_case = use_case

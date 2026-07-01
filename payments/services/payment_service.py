@@ -18,7 +18,7 @@ class PaymentService:
 
     def checkout_session(self, session, user_id):
         self.session_repository.complete_payment_session(session.token)
-        self._order_client.mark_order_as_paid(session.order_id, user_id)
+        self._order_client.mark_order_as_paid(session.order_id)
 
     def create_payment_session(self, user, order_data):
         return self.session_repository.create_payment_session(order_data, user)

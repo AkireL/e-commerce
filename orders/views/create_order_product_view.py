@@ -9,6 +9,7 @@ from orders.use_cases.add_product import AddProductInput
 
 class CreateOrderProductView(APIView):
     permission_classes = [IsAuthenticated]
+    use_case = None
 
     def __init__(self, use_case=None, **kwargs):
         super().__init__(**kwargs)

@@ -34,12 +34,10 @@ class OrderMarkPaidView(APIView):
         self.use_case = use_case
 
     def post(self, request, pk):
-        owner_id= request.data.get('owner_id', None)
-
         input = PaidOrderInput(
             order_id=pk,
-            user_id=owner_id,
         )
+
         result = self.use_case.execute(input)
 
         if not result.success:

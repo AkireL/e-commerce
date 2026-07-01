@@ -6,6 +6,7 @@ from orders.use_cases.show_order import ShowOrderInput
 
 class ShowMyOrdersView(LoginRequiredMixin, TemplateView):
     template_name = "my_orders.html"
+    use_case = None
 
     def __init__(self, use_case=None, **kwargs):
         super().__init__(**kwargs)

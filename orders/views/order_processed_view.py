@@ -10,6 +10,7 @@ from orders.use_cases.show_processed_order import ShowProcessedOrderInput
 
 class OrderProcessedView(LoginRequiredMixin, TemplateView):
     template_name = "order_processed.html"
+    use_case = None
 
     def __init__(self, use_case=None, **kwargs):
         super().__init__(**kwargs)
