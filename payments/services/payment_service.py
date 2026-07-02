@@ -20,9 +20,7 @@ class PaymentService:
 
     def checkout_session(self, session):
         self.session_repository.complete_payment_session(session.token)
-        output = self._order_client.mark_order_as_paid(session.order_id)
-        
-        logger.warning(f"PaymentService - checkout_session: Marked order {session.order_id} as paid: {output}")
+        self._order_client.mark_order_as_paid(session.order_id)
 
     def create_payment_session(self, user, order_data):
         return self.session_repository.create_payment_session(order_data, user)
