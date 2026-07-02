@@ -32,7 +32,7 @@ class ShowProcessedOrderUseCase:
 
     def execute(self, input: ShowProcessedOrderInput) -> ShowProcessedOrderOutput:
         session = self.payments_client.get_payment_completed_session(
-            input.token, input.user_id
+            input.token
         )
 
         if not session:

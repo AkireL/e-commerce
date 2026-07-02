@@ -6,7 +6,6 @@ from rest_framework.permissions import IsAuthenticated
 from orders.serializers import OrderSerializer
 from orders.use_cases.order_detail import OrderDetailInput
 from orders.use_cases.paid_order import PaidOrderInput
-from logger.logger import logger
 
 
 class OrderDetailView(APIView):
@@ -29,7 +28,6 @@ class OrderDetailView(APIView):
             return Response({'error': result.error}, status=status.HTTP_404_NOT_FOUND)
 
         serializer = OrderSerializer(result.order)
-        logger.warning(f"orders:api OrderDetailView - Order with id {pk} retrieved successfully for user {request.user.id}.")
         return Response({'order': serializer.data})
 
 
@@ -44,11 +42,11 @@ class OrderMarkPaidView(APIView):
     def post(self, request, pk):
         input = PaidOrderInput(
             order_id=pk,
-            user_id=request.user.id,
         )
 
         result = self.use_case.execute(input)
 
+        
         if not result.success:
             return Response({'error': result.error}, status=status.HTTP_404_NOT_FOUND)
 

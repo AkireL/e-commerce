@@ -21,10 +21,7 @@ class PaidOrderUseCase:
 
         if order is None:
             return PaidOrderOutput(success=False, error="Order not found")
-
-        if order.user_id != input.user_id:
-            return PaidOrderOutput(success=False, error="Order not found")
-
+        
         if not order.is_active:
             return PaidOrderOutput(success=False, error="Order already paid")
 

@@ -7,6 +7,7 @@ from orders.use_cases.add_product import AddProductUseCase
 from orders.use_cases.show_order import ShowOrderUseCase
 from orders.use_cases.update_item import UpdateItemUseCase
 from orders.use_cases.remove_item import RemoveItemUseCase
+from orders.presenters.order_detail_presenter import OrderDetailPresenter
 from orders.use_cases.order_detail import OrderDetailUseCase
 from orders.use_cases.paid_order import PaidOrderUseCase
 from orders.use_cases.show_processed_order import ShowProcessedOrderUseCase
@@ -69,11 +70,15 @@ urlpatterns = [
             )
         ),
         name="cart-remove-item",
+        
     ),
     path(
         "<int:pk>/",
         OrderDetailView.as_view(
-            use_case=OrderDetailUseCase(order_repo=OrderRepository())
+            use_case=OrderDetailUseCase(
+                order_repo=OrderRepository(),
+                presenter=OrderDetailPresenter(),
+            )
         ),
         name="api-order-detail",
     ),

@@ -2,6 +2,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import TemplateView
 
 from orders.use_cases.show_order import ShowOrderInput
+from logger.logger import logger
 
 
 class ShowMyOrdersView(LoginRequiredMixin, TemplateView):
@@ -21,6 +22,9 @@ class ShowMyOrdersView(LoginRequiredMixin, TemplateView):
         context["order"] = {
             "id": result.order_id,
             "is_active": result.is_active,
+            "user_id": self.request.user.id,
+            "user_email": self.request.user.email,
+            "user_username": self.request.user.username,
         } if result.order_id else None
         context["order_items"] = result.items
         context["order_total"] = result.order_total

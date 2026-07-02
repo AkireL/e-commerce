@@ -38,9 +38,9 @@ class PaymentSessionRepository:
                 session = PaymentSession.objects.create(
                     order_id=order_id,
                     order_number=str(order_id),
-                    user_id=user.id,
-                    user_username=user.username,
-                    user_email=user.email,
+                    user_id=user["id"],
+                    user_username=user["username"],
+                    user_email=user["email"]    ,
                     status=PaymentSessionStatus.PENDING,
                 )
 
@@ -67,28 +67,28 @@ class PaymentSessionRepository:
             return None
 
     def get_completed_session(
-        self, token: uuid.UUID, user_id: int
+        self, token: uuid.UUID
     ) -> SessionDTO | None:
         try:
             session = PaymentSession.objects.prefetch_related("items").get(
                 token=token,
-                user_id=user_id,
                 status=PaymentSessionStatus.COMPLETED,
             )
             return SessionDTO.from_model(session)
         except PaymentSession.DoesNotExist:
+            logger.warning(f"PaymentSessionRepository - get_completed_session: Session with token {token} not found or not completed.")
             return None
 
     def get_pending_session_for_checkout(
-        self, token: uuid.UUID, user_id: int
+        self, token: uuid.UUID
     ) -> SessionDTO | None:
         try:
             session = PaymentSession.objects.prefetch_related("items").get(
-                token=token,
-                user_id=user_id,
+                token=token
             )
             return SessionDTO.from_model(session)
         except PaymentSession.DoesNotExist:
+            logger.error(f"PaymentSessionRepository - get_pending_session_for_checkout: Session with token {token} not found.")
             return None
 
     def invalidate_pending_sessions(self, order_id: int) -> int:

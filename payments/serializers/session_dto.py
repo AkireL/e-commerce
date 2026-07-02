@@ -32,9 +32,9 @@ class SessionDTO:
 
     @staticmethod
     def from_model(
-        session: PaymentSession, items: list[PaymentItem] | None = None
-    ) -> "SessionDTO":
-        if items is None:
+        session: PaymentSession, items: list[PaymentItem] = []
+    ):
+        if not items:
             items = list(session.items.all())
 
         item_dto = ItemDTO()
@@ -55,3 +55,18 @@ class SessionDTO:
 
     def __str__(self) -> str:
         return f"SessionDTO(id={self.id}, token={self.token}, order_number={self.order_number}, status={self.status}, amount_total={self.amount_total}, items={len(self.items)})"
+
+    def toJson(self) -> dict:
+        return {
+            "id": self.id,
+            "token": str(self.token),
+            "order_id": self.order_id,
+            "order_number": self.order_number,
+            "user_id": self.user_id,
+            "user_username": self.user_username,
+            "user_email": self.user_email,
+            "status": self.status,
+            "amount_total": str(self.amount_total),
+            # "items": [item.toJson() for item in self.items],
+            "get_checkout_url": self.get_checkout_url,
+        }

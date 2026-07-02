@@ -18,6 +18,12 @@ class CreateSessionView(LoginRequiredMixin, View):
     def post(self, request):
         order_id = request.POST.get("order_id")
         items_raw = request.POST.getlist("items")
+        
+        owner = {
+            "id": request.POST.get("user_id"),
+            "username": request.POST.get("user_username"),
+            "email": request.POST.get("user_email"),
+        }
 
         if not order_id or not items_raw:
             messages.error(request, "No se encontró información de la orden.")
@@ -39,7 +45,7 @@ class CreateSessionView(LoginRequiredMixin, View):
         }
 
         try:
-            session_data = self.payment_service.create_payment_session(request.user, order_data)
+            session_data = self.payment_service.create_payment_session(owner, order_data)
             messages.info(request, "Redirigiéndote a la pasarela de pago simulada.")
             return redirect("payments:checkout", token=session_data.token)
         except EmptyOrderError as exc:

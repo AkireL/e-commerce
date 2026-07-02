@@ -4,7 +4,7 @@
 <div class="max-w-5xl mx-auto px-4 py-8">
     <!-- Header -->
     <div class="mb-6">
-        <h1 class="text-3xl font-bold text-gray-800">Mis Ordenes</h1>
+        <h1 class="text-3xl font-bold text-gray-800">Mis Ordenes {{ user.username }}</h1>
         <p class="text-gray-500 mt-1 text-sm">Aquí puedes ver tus órdenes recientes</p>
     </div>
 
@@ -163,6 +163,9 @@
         <div class="px-6 py-6" data-cart-actions {% if not order_items %}hidden{% endif %}>
             <form method="post" action="{% url 'payments:create-session' %}">
                 {% csrf_token %}
+                <input type="hidden" name="user_id" value="{{ user.id }}">
+                <input type="hidden" name="user_username" value="{{ user.username }}">
+                <input type="hidden" name="user_email" value="{{ user.email }}">
                 <input type="hidden" name="order_id" value="{{ order.id }}">
                 {% for item in order_items %}
                 <input type="hidden" name="items" value='{"product_id": {{ item.product_id }}, "product_name": "{{ item.product_name }}", "product_price": "{{ item.product_price|unlocalize}}", "quantity": {{ item.quantity }}}'>

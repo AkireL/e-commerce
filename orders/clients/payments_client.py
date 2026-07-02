@@ -40,7 +40,7 @@ class PaymentsClient:
         response = internal_post(url, {'order_id': order_id}, self._token)
         return response
 
-    def get_payment_completed_session(self, token: str, user_id: int) -> dict | None:
+    def get_payment_completed_session(self, token: str) -> dict | None:
         self._ensure_token()
         response = internal_get(f'/payments/sessions/{token}/', self._token)
         return response.get('session')
